@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+title: "HybridCR: a browser-based tool for maximum-likelihood inference and study design in competing-risks models under hybrid Type-I censoring"
+message: "If you use this software, please cite it and the companion articles below."
+type: software
+version: v1.0.0
+date-released: 2026-10-22
+license: MIT
+authors:
+  - family-names: Nurmukhamedova
+    given-names: Nargiza S.
+    affiliation: "National University of Uzbekistan named after Mirzo Ulugbek"
+    email: n.nurmukhamedova@nuu.uz
+  - family-names: Abdushukurov
+    given-names: Abdurahim A.
+    affiliation: "Lomonosov Moscow State University, Tashkent Branch"
+repository-code: "https://github.com/nsnargiza-gif/HybridCR"
+url: "https://github.com/nsnargiza-gif/HybridCR"
+# After publishing the Mendeley Data archive, add its DOI here (this is field C3):
+# doi: 10.17632/XXXXXXXX
+references:
+  - type: article
+    title: "A Bernstein–von Mises theorem for parametric competing risks under hybrid censoring"
+    authors: [{family-names: Nurmukhamedova, given-names: N. S.}]
+    journal: Mathematics
+    volume: 14
+    issue: 18
+    year: 2026
+    doi: 10.3390/math14183277
+  - type: article
+    title: "Simulation dataset on power and size of Wald, likelihood-ratio, and score test statistics in parametric competing risks models under hybrid censoring"
+    authors: [{family-names: Nurmukhamedova, given-names: N. S.}]
+    journal: Data in Brief
+    volume: 68
+    year: 2026
+    doi: 10.1016/j.dib.2026.113136

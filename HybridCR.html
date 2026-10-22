@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision-support software suite for the asymptotic analysis of competing risks under hybrid censoring</title>
+<style>
+  :root{
+    --ink:#0a0f1a; --ink-2:#111a28; --panel:#141d2b; --panel-2:#1a2538;
+    --line:#33415e; --parch:#f0ead8; --muted:#9aabc9;
+    --amber:#5b8def; --amber-2:#7aa7f5; --teal:#4bb7a8; --teal-2:#50e3c2;
+    --rose:#d47a68; --white:#fbf7ee;
+    --mono:"IBM Plex Mono",ui-monospace,monospace; --serif:"Spectral",Georgia,serif;
+    --sans:"Inter",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:
+      radial-gradient(1100px 550px at 82% -10%, #1a2a44 0%, transparent 55%),
+      radial-gradient(850px 520px at -10% 110%, #111d30 0%, transparent 52%),
+      var(--ink);
+      color:var(--parch); font-family:var(--sans); line-height:1.55;
+      -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+
+  /* header */
+  .top{padding:44px 0 26px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.3em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:14px}
+  .top h1{font-family:var(--serif);font-size:clamp(26px,3.6vw,40px);font-weight:700;
+    color:var(--white);line-height:1.1;max-width:22ch}
+  .top h1 em{font-style:italic;color:var(--amber-2)}
+  .top p{margin-top:14px;max-width:74ch;color:var(--muted);font-size:15px}
+  .top .note{margin-top:12px;font-family:var(--mono);font-size:11.5px;color:var(--teal)}
+
+  /* module nav */
+  .modnav{position:sticky;top:0;z-index:20;background:var(--ink-2);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .modnav .wrap{display:flex;gap:2px;flex-wrap:wrap}
+  .modnav button{background:none;border:none;color:var(--muted);cursor:pointer;
+    font-family:var(--mono);font-size:12px;padding:15px 16px;letter-spacing:.04em;
+    border-bottom:2px solid transparent;transition:.18s}
+  .modnav button .mi{color:var(--amber);margin-right:7px}
+  .modnav button:hover{color:var(--parch)}
+  .modnav button.on{color:var(--white);border-bottom-color:var(--amber)}
+
+  .mod{padding:44px 0;border-bottom:1px solid var(--line);scroll-margin-top:56px}
+  .mod-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px}
+  .mod-head .mk{font-family:var(--mono);font-size:13px;color:var(--amber)}
+  .mod-head h2{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--white)}
+  .mod-lede{color:var(--muted);max-width:78ch;margin-bottom:28px;font-size:16px;line-height:1.7}
+  .mod-lede b{color:var(--amber-2)}
+
+  /* layout: controls | output */
+  .grid{display:grid;grid-template-columns:280px 1fr;gap:32px}
+  @media(max-width:840px){.grid{grid-template-columns:1fr}}
+  .controls{background:var(--panel-2);border:1px solid rgba(75,183,168,.14);border-radius:8px;
+    padding:28px;box-shadow:0 0 30px rgba(75,183,168,.04)}
+  .output{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:28px;min-height:340px}
+
+  .ctrl{margin-bottom:24px}
+  .ctrl:last-child{margin-bottom:0}
+  .ctrl label{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:var(--mono);font-size:13px;color:var(--parch);margin-bottom:10px}
+  .ctrl label .v{color:var(--amber-2);font-weight:600}
+  .ctrl label .hint{color:var(--muted);font-size:10.5px}
+  input[type=range]{width:100%;-webkit-appearance:none;height:4px;border-radius:2px;
+    background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+    border-radius:50%;background:var(--amber);cursor:pointer;border:2px solid var(--ink)}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;
+    background:var(--amber);cursor:pointer;border:2px solid var(--ink)}
+  .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .seg button{flex:1;background:var(--panel);border:none;color:var(--muted);cursor:pointer;
+    font-family:var(--mono);font-size:11.5px;padding:9px;transition:.15s}
+  .seg button.on{background:var(--amber);color:var(--ink);font-weight:600}
+  .btn{width:100%;background:var(--teal-dim,#2c6f68);border:1px solid var(--teal);
+    color:var(--white);font-family:var(--mono);font-size:12.5px;padding:11px;
+    border-radius:3px;cursor:pointer;letter-spacing:.05em;transition:.15s;margin-top:4px}
+  .btn:hover{background:var(--teal);color:var(--ink)}
+  .btn.amber{background:transparent;border-color:var(--amber);color:var(--amber-2)}
+  .btn.amber:hover{background:var(--amber);color:var(--ink)}
+
+  /* output bits */
+  .stat-row{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:20px}
+  .stat{}
+  .stat .sv{font-family:var(--serif);font-size:29px;font-weight:700;color:var(--white);
+    line-height:1}
+  .stat .sv small{font-size:14px;color:var(--amber);font-weight:600}
+  .stat .sk{font-family:var(--mono);font-size:10.5px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.08em;margin-top:5px}
+  .stat.good .sv{color:var(--teal-2)}
+  .stat.warn .sv{color:var(--amber-2)}
+
+  .viz{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:3px;
+    margin-top:6px}
+  .viz-cap{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;
+    margin-top:10px;letter-spacing:.03em;line-height:1.5}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;
+    color:var(--muted);margin-top:12px}
+  .legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px}
+
+  table.mini{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  table.mini th,table.mini td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left}
+  table.mini th{font-family:var(--mono);font-size:10.5px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+  table.mini td{font-family:var(--mono);color:var(--parch)}
+  table.mini tr.best td{background:rgba(224,164,55,.08);color:var(--amber-2)}
+
+  .callout{font-size:14px;color:var(--parch);background:var(--panel-2);
+    border-left:3px solid var(--amber);padding:14px 18px;border-radius:0 8px 8px 0;
+    margin-top:16px;line-height:1.6;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+  .callout b{color:var(--white)}
+  .theorem{font-family:var(--mono);font-size:14px;color:var(--amber-2);
+    background:var(--ink);border:1px solid rgba(245,166,35,.25);border-radius:6px;
+    padding:16px 18px;text-align:center;margin-top:14px;line-height:1.5}
+
+  footer{padding:34px 0 60px}
+  footer .fl{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.05em}
+  footer .ft{font-family:var(--serif);font-size:15px;color:var(--parch);margin-top:9px;max-width:70ch}
+  a{color:var(--teal-2)}
+  @media(max-width:600px){
+    .wrap{padding:0 16px}
+    .stat-row{gap:16px}
+    .stat .sv{font-size:22px}
+    .modnav button{padding:12px 10px;font-size:11px}
+    .top h1{font-size:24px}
+  }
+  .pngbtn{float:right;background:none;border:1px solid var(--line);color:var(--muted);
+    font-family:var(--mono);font-size:10.5px;padding:5px 10px;border-radius:3px;cursor:pointer;
+    margin-bottom:8px;transition:.15s}
+  .pngbtn:hover{border-color:var(--teal);color:var(--teal-2)}
+  body.light{
+    --ink:#f4f1e8; --ink-2:#eae4d5; --panel:#fbf8f0; --panel-2:#f0ebdd;
+    --line:#c9bfa8; --parch:#2a2418; --muted:#6b6350;
+    --amber:#2f5fc0; --amber-2:#254a99; --teal:#2a8577; --teal-2:#1f7365;
+    --rose:#b5503c; --white:#1a1712;
+  }
+  body.light{background:
+    radial-gradient(1100px 550px at 82% -10%, #e8dfc8 0%, transparent 55%),
+    radial-gradient(850px 520px at -10% 110%, #e2dcc9 0%, transparent 52%),
+    var(--ink);}
+  .themebtn{background:none;border:1px solid var(--line);color:var(--muted);cursor:pointer;
+    font-family:var(--mono);font-size:11px;padding:7px 12px;border-radius:20px;transition:.15s}
+  .themebtn:hover{border-color:var(--amber);color:var(--amber-2)}
+  .preset{background:var(--panel-2);border:1px solid var(--line);color:var(--parch);
+    font-family:var(--mono);font-size:12.5px;padding:12px 20px;border-radius:22px;cursor:pointer;
+    transition:.18s;letter-spacing:.02em}
+  .preset:hover{border-color:var(--amber);color:var(--amber-2);transform:translateY(-2px);
+    box-shadow:0 4px 16px rgba(245,166,35,.12)}
+  .preset.on{background:var(--amber);color:var(--ink);border-color:var(--amber);font-weight:600}
+  /* info tooltip */
+  .info{display:inline-block;width:15px;height:15px;border:1px solid var(--muted);border-radius:50%;
+    color:var(--muted);font-size:10px;text-align:center;line-height:13px;cursor:help;margin-left:5px;
+    position:relative;font-family:var(--mono)}
+  .info:hover{border-color:var(--teal);color:var(--teal-2)}
+  .info .tip{display:none;position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
+    width:230px;background:var(--ink-2);border:1px solid var(--teal-dim,#2c6f68);border-radius:6px;
+    padding:11px 13px;font-family:var(--sans);font-size:12px;color:var(--parch);line-height:1.5;
+    z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.5);text-align:left;letter-spacing:0}
+  .info:hover .tip{display:block}
+  .info .tip b{color:var(--amber-2)}
+  .stat-flash{animation:flash .6s ease-out}
+  @keyframes flash{0%{background:rgba(224,164,55,.25)}100%{background:transparent}}
+  .stat .sv{transition:color .2s}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+    border-top-color:var(--teal-2);border-radius:50%;animation:spin .7s linear infinite;
+    vertical-align:middle;margin-right:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  /* hoverable diagnostic terms */
+  .dterm{position:relative;border-bottom:1px dotted var(--muted);cursor:help;color:var(--muted)}
+  .dterm .dtip{display:none;position:absolute;bottom:20px;left:0;width:250px;
+    background:var(--ink-2);border:1px solid var(--teal-dim,#2c6f68);border-radius:6px;
+    padding:10px 12px;font-family:var(--sans);font-size:12px;color:var(--parch);line-height:1.5;
+    z-index:40;box-shadow:0 8px 24px rgba(0,0,0,.55);letter-spacing:0;white-space:normal}
+  .dterm:hover .dtip{display:block}
+  @media(max-width:600px){
+    input[type=range]{height:6px}
+    input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
+    input[type=range]::-moz-range-thumb{width:22px;height:22px}
+    .dterm .dtip{width:200px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="eyebrow" style="display:flex;justify-content:space-between;align-items:center">
+      <span>DSS computational suite · Asymptotic theory of statistical inference</span>
+      <button class="themebtn" id="themeToggle">☀ light theme</button>
+    </div>
+    <h1>Asymptotic analysis <em>competing risks</em> under hybrid censoring</h1>
+    <p>Change the parameters and get the result. All computations (simulation, estimation
+      by Newton's method, Fisher information, sample-size planning) run directly in the
+      browser, based on the asymptotic theory from the dissertation. A tool
+      for researchers working with incomplete time-to-event data.</p>
+    <p class="note">▸ Everything is computed locally · exponential and Weibull models · two competing causes</p>
+    <details style="margin-top:16px;max-width:78ch">
+      <summary style="font-family:var(--mono);font-size:12px;color:var(--teal-2);cursor:pointer;letter-spacing:.04em">▸ Assumptions and range of validity (important for correct interpretation)</summary>
+      <div style="font-size:13.5px;color:var(--muted);margin-top:12px;line-height:1.6">
+        The results rely on the conditions from the dissertation:
+        <b style="color:var(--parch)">(A1)</b> smoothness of the cause intensities (three times differentiable in the parameter);
+        <b style="color:var(--parch)">(A2)</b> the failure fraction β tends to a limit, the horizon τₙ→τ*&lt;∞;
+        <b style="color:var(--parch)">(A3)</b> the operational information is non-degenerate.
+        The estimators are consistent and asymptotically normal under these conditions; the confidence
+        intervals: asymptotic (accurate for large n). The latent cause times
+        are assumed <b style="color:var(--parch)">independent</b> (module 05 shows the cost of its violation).
+        For very small n or heavy censoring (β close to 0.2) the asymptotics are poorer:
+        this <b style="color:var(--parch)">information limit</b>, the tool shows it honestly.
+      </div>
+    </details>
+    <div style="margin-top:22px">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px">Preset scenarios (click to load parameters)</div>
+      <div id="presets" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="preset" data-p="clinical">⚕ Clinical trial</button>
+        <button class="preset" data-p="reliability">⚙ Equipment reliability</button>
+        <button class="preset" data-p="planning">◷ Sample-size planning</button>
+        <button class="preset" data-p="heavy">⚠ Heavy censoring</button>
+        <button class="preset" id="resetAll" style="border-color:var(--rose);color:var(--rose)">↺ Reset all</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="modnav">
+  <div class="wrap">
+    <button class="on" data-go="m1"><span class="mi">01</span>Simulation</button>
+    <button data-go="m2"><span class="mi">02</span>Information and efficiency</button>
+    <button data-go="m3"><span class="mi">03</span>Newton convergence</button>
+    <button data-go="m4"><span class="mi">04</span>Sample-size planner</button>
+    <button data-go="m5"><span class="mi">05</span>Risk dependence</button>
+    <button data-go="m6"><span class="mi">06</span>Test power</button>
+  </div>
+</nav>
+
+<!-- ============ MODULE 1: SANDBOX ============ -->
+<section class="mod" id="m1">
+  <div class="wrap">
+    <div class="mod-head"><span class="mk">01</span><h2>Simulation and estimation under hybrid censoring</h2></div>
+    <p class="mod-lede">Generate a sample from the two-cause model and see how
+      the maximum-likelihood estimate recovers the true parameters. Move
+      <b>the failure fraction β</b>, <b>sample size n</b> and the cause parameters, and the estimate
+      is recomputed instantly. The data are generated by <b>the hybrid scheme</b>
+      τₙ = min(X₍ᵣ₎, T₀): observation stops at the moment when
+      r = ⌈βn⌉ failures have accrued, or the horizon T₀ is reached (whichever comes first).</p>
+    <div class="grid">
+      <div class="controls" id="c1">
+        <div class="ctrl">
+          <label>Family</label>
+          <div class="seg" id="fam1">
+            <button class="on" data-fam="exp">Exponential</button>
+            <button data-fam="wb">Weibull</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label>Failure fraction β <span class="v" id="b1v">0.75</span></label>
+          <input type="range" id="b1" min="0.2" max="1" step="0.05" value="0.75">
+        </div>
+        <div class="ctrl">
+          <label>Sample size n <span class="v" id="n1v">1000</span></label>
+          <input type="range" id="n1" min="50" max="5000" step="50" value="1000">
+        </div>
+        <div class="ctrl">
+          <label>Cause 1 · intensity a₁ <span class="v" id="a11v">1.0</span></label>
+          <input type="range" id="a11" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+        <div class="ctrl">
+          <label>Cause 2 · intensity a₂ <span class="v" id="a21v">0.5</span></label>
+          <input type="range" id="a21" min="0.2" max="2.5" step="0.1" value="0.5">
+        </div>
+        <div class="ctrl wbonly" style="display:none">
+          <label>Weibull shape γ₁ (cause 1) <span class="v" id="g1av">1.3</span></label>
+          <input type="range" id="g1a" min="0.6" max="2.5" step="0.1" value="1.3">
+        </div>
+        <div class="ctrl wbonly" style="display:none">
+          <label>Weibull shape γ₂ (cause 2) <span class="v" id="g1bv">0.9</span></label>
+          <input type="range" id="g1b" min="0.6" max="2.5" step="0.1" value="0.9">
+        </div>
+        <button class="btn" id="resim1">↻ New sample (different seed)</button>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <label style="font-family:var(--mono);font-size:11px;color:var(--muted);display:block;margin-bottom:8px">Your own data · CSV (time, cause, status)</label>
+          <input type="file" id="csv1" accept=".csv,.txt" style="display:none">
+          <button class="btn amber" id="csvbtn1" style="margin-top:0">⭱ Upload CSV</button>
+          <button class="btn" id="exmpl1" style="margin-top:8px;background:none;border-color:var(--line);color:var(--muted)">⤓ Download example CSV</button>
+          <button class="btn" id="exp1" style="margin-top:8px">⭳ Export result (CSV)</button>
+          <button class="btn" id="report1" style="margin-top:8px;background:none;border-color:var(--line);color:var(--muted)">⛭ HTML report</button>
+          <div id="csvinfo1" style="font-family:var(--mono);font-size:10.5px;color:var(--teal);margin-top:8px"></div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <button class="btn amber" id="compare1" style="margin-top:0">⇄ Compare both models</button>
+          <button class="btn" id="boot1" style="margin-top:8px;background:none;border-color:var(--teal);color:var(--teal-2)">◇ Bootstrap CI (for small n)</button>
+        </div>
+      </div>
+      <div class="output">
+        <div class="stat-row" id="s1"></div>
+        <svg class="viz" id="viz1" viewBox="0 0 640 240" width="100%" height="240"></svg>
+        <div class="viz-cap">Observed times: failures by cause and censored ones (right boundary τₙ)</div>
+        <div id="diag1" style="margin-top:18px"></div>
+        <svg class="viz" id="viz1b" viewBox="0 0 640 240" width="100%" height="240" style="margin-top:14px"></svg>
+        <div class="viz-cap">Cumulative incidence functions Hⱼ(t) by cause: parametric estimates vs Aalen–Johansen (nonparam.)</div>
+        <svg class="viz" id="viz1c" viewBox="0 0 640 240" width="100%" height="240" style="margin-top:14px"></svg>
+        <div class="viz-cap">Goodness-of-fit diagnostic (Cox–Snell): points on the diagonal ⇒ the model is adequate. R² is computed without a censoring correction (a rough indicator, not an exact test.</div>
+        <div class="callout" id="call1"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULE 2: INFORMATION ============ -->
+<section class="mod" id="m2">
+  <div class="wrap">
+    <div class="mod-head"><span class="mk">02</span><h2>Operational information and efficiency bound</h2></div>
+    <p class="mod-lede">Under censoring, efficiency is measured relative to
+      <b>operational information</b> I = β·I_F, not the classical I_F. See how
+      the limiting MLE variance and the Cramér–Rao bound change with the failure fraction β.</p>
+    <div class="grid">
+      <div class="controls">
+        <div class="ctrl">
+          <label>Family</label>
+          <div class="seg" id="fam2">
+            <button class="on" data-fam="exp">Exponential</button>
+            <button data-fam="wb">Weibull</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label>Cause 1 · a₁ <span class="v" id="a12v">1.0</span></label>
+          <input type="range" id="a12" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+        <div class="ctrl">
+          <label>Cause 2 · a₂ <span class="v" id="a22v">0.5</span></label>
+          <input type="range" id="a22" min="0.2" max="2.5" step="0.1" value="0.5">
+        </div>
+        <div class="ctrl wbonly2" style="display:none">
+          <label>Shape g₁ <span class="v" id="g12v">1.3</span></label>
+          <input type="range" id="g12" min="0.6" max="2.5" step="0.1" value="1.3">
+        </div>
+        <div class="ctrl wbonly2" style="display:none">
+          <label>Shape g₂ <span class="v" id="g22v">0.9</span></label>
+          <input type="range" id="g22" min="0.6" max="2.5" step="0.1" value="0.9">
+        </div>
+        <div class="ctrl">
+          <label>Mark β <span class="v" id="b2v">0.75</span></label>
+          <input type="range" id="b2" min="0.2" max="1" step="0.05" value="0.75">
+        </div>
+        <div class="theorem" id="thm2">√n(â₁−a₁) → N(0, a₁λ/β);  Var(â₁) ≈ a₁λ / (nβ)<span class="info">?<span class="tip"><b>Operational information:</b> under censoring only a fraction β of failures is observed, so the available information equals β·I_F, not I_F. The variance bound is its inverse, hence the factor 1/β.</span></span></div>
+      </div>
+      <div class="output">
+        <div class="stat-row" id="s2"></div>
+        <svg class="viz" id="viz2" viewBox="0 0 640 260" width="100%" height="260"></svg>
+        <div class="viz-cap">Limiting variance √n(θ̂₁−θ₁) as a function of the failure fraction β</div>
+        <div class="callout" id="call2"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULE 3: NEWTON ============ -->
+<section class="mod" id="m3">
+  <div class="wrap">
+    <div class="mod-head"><span class="mk">03</span><h2>Newton's method: quadratic convergence, live</h2></div>
+    <p class="mod-lede">Run the MLE by Newton's method for the chosen model and watch
+      how the error decreases <b>quadratically</b>: the number of correct digits doubles at each
+      iteration. This is the core of the decision-support system.</p>
+    <div class="grid">
+      <div class="controls">
+        <div class="ctrl">
+          <label>Family</label>
+          <div class="seg" id="fam3">
+            <button class="on" data-fam="exp">Exponential</button>
+            <button data-fam="wb">Weibull</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label>Sample size n <span class="v" id="n3v">2000</span></label>
+          <input type="range" id="n3" min="200" max="8000" step="100" value="2000">
+        </div>
+        <div class="ctrl">
+          <label>Failure fraction β <span class="v" id="b3v">0.8</span></label>
+          <input type="range" id="b3" min="0.3" max="1" step="0.05" value="0.8">
+        </div>
+        <div class="ctrl">
+          <label>Start distance <span class="v" id="st3v">1.3×</span></label>
+          <input type="range" id="st3" min="0.6" max="1.6" step="0.05" value="1.3">
+          <label class="hint" style="margin-top:6px;color:var(--muted)">√n-consistent start (zone of quadratic convergence)</label>
+        </div>
+        <button class="btn amber" id="run3">▸ Run Newton iterations</button>
+        <button class="btn" id="step3" style="margin-top:8px;background:none;border-color:var(--line);color:var(--muted)">⏭ Step by step (next iteration)</button>
+      </div>
+      <div class="output">
+        <div class="stat-row" id="s3"></div>
+        <svg class="viz" id="viz3" viewBox="0 0 640 250" width="100%" height="250"></svg>
+        <div class="viz-cap">Error norm ‖θ⁽ᵏ⁾ − θ̂‖ over iterations (log scale): a straight line down = quadratic rate</div>
+        <table class="mini" id="tab3"></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULE 4: PLANNER ============ -->
+<section class="mod" id="m4">
+  <div class="wrap">
+    <div class="mod-head"><span class="mk">04</span><h2>Sample-size planner</h2></div>
+    <p class="mod-lede">Practical question: <b>how many observations are needed</b>
+      to estimate the parameters with a given precision δ? Set the target precision and parameters,
+      get the required n from the operational information.</p>
+    <div class="grid">
+      <div class="controls">
+        <div class="ctrl">
+          <label>Family</label>
+          <div class="seg" id="fam4">
+            <button class="on" data-fam="exp">Exponential</button>
+            <button data-fam="wb">Weibull</button>
+          </div>
+        </div>
+        <div class="ctrl">
+          <label>Target precision δ (std error) <span class="v" id="d4v">0.05</span></label>
+          <input type="range" id="d4" min="0.01" max="0.2" step="0.005" value="0.05">
+        </div>
+        <div class="ctrl">
+          <label>Failure fraction β <span class="v" id="b4v">0.75</span></label>
+          <input type="range" id="b4" min="0.2" max="1" step="0.05" value="0.75">
+        </div>
+        <div class="ctrl">
+          <label>Cause 1 · a₁ <span class="v" id="a14v">1.0</span></label>
+          <input type="range" id="a14" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+        <div class="ctrl">
+          <label>Cause 2 · a₂ <span class="v" id="a24v">0.5</span></label>
+          <input type="range" id="a24" min="0.2" max="2.5" step="0.1" value="0.5">
+        </div>
+        <div class="ctrl wbonly4" style="display:none">
+          <label>Shape γ₁ <span class="v" id="g14v">1.3</span></label>
+          <input type="range" id="g14" min="0.6" max="2.5" step="0.1" value="1.3">
+        </div>
+        <div class="ctrl wbonly4" style="display:none">
+          <label>Shape γ₂ <span class="v" id="g24v">0.9</span></label>
+          <input type="range" id="g24" min="0.6" max="2.5" step="0.1" value="0.9">
+        </div>
+        <div class="theorem">n = maxⱼ [I⁻¹]ⱼⱼ / δ²<span class="info">?<span class="tip"><b>Where the formula comes from:</b> asymptotically √n(θ̂ⱼ−θⱼ) ~ N(0, [I⁻¹]ⱼⱼ), so the standard error ≈ √([I⁻¹]ⱼⱼ/n). Setting it equal to the target δ and taking the maximum over coordinates gives the required n.</span></span></div>
+      </div>
+      <div class="output">
+        <div class="stat-row" id="s4"></div>
+        <svg class="viz" id="viz4" viewBox="0 0 640 250" width="100%" height="250"></svg>
+        <div class="viz-cap">Required sample size n as a function of the target precision δ (n grows as 1/δ²)</div>
+        <div class="callout" id="call4"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULE 5: DEPENDENCE ============ -->
+<section class="mod" id="m5">
+  <div class="wrap">
+    <div class="mod-head"><span class="mk">05</span><h2>Effect of risk dependence on estimation</h2></div>
+    <p class="mod-lede">The standard assumption of <b>independence</b> of the competing causes is in practice untestable. If the causes are linked by a copula, the independence-based estimate departs systematically from the marginal rate. Move the dependence (Kendall's τ) and watch the discrepancy: it is <b>linear</b> in τ and small under weak dependence.
+      <span style="color:var(--amber);font-size:12px">Note: the dependence-discrepancy analysis is implemented for the exponential model (Clayton copula); for Weibull the copula model is more complex and is left to future work.</span></p>
+    <div class="grid">
+      <div class="controls">
+        <div class="ctrl">
+          <label>Dependence τ (Kendall) <span class="v" id="t5v">0.10</span></label>
+          <input type="range" id="t5" min="0" max="0.5" step="0.025" value="0.10">
+          <label class="hint" style="margin-top:6px;color:var(--muted)">0 = independence · Clayton copula</label>
+        </div>
+        <div class="ctrl">
+          <label>Failure fraction β <span class="v" id="b5v">0.75</span></label>
+          <input type="range" id="b5" min="0.3" max="1" step="0.05" value="0.75">
+        </div>
+        <div class="ctrl">
+          <label>Sample size n <span class="v" id="n5v">3000</span></label>
+          <input type="range" id="n5" min="500" max="6000" step="500" value="3000">
+        </div>
+        <div class="ctrl">
+          <label>Cause 1 · intensity a₁ <span class="v" id="a15v">1.0</span></label>
+          <input type="range" id="a15" min="0.2" max="2.5" step="0.1" value="1.0">
+        </div>
+        <div class="ctrl">
+          <label>Cause 2 · intensity a₂ <span class="v" id="a25v">0.5</span></label>
+          <input type="range" id="a25" min="0.2" max="2.5" step="0.1" value="0.5">
+        </div>
+        <button class="btn" id="run5">▸ Estimate discrepancy (Monte Carlo)</button>
+      </div>
+      <div class="output">
+        <div class="stat-row" id="s5"></div>
+        <svg class="viz" id="viz5" viewBox="0 0 640 250" width="100%" height="250"></svg>
+        <div class="viz-cap">Systematic discrepancy of θ̂₁ under the independence model as a function of the dependence τ</div>
+        <svg class="viz" id="viz5b" viewBox="0 0 640 260" width="100%" height="260" style="margin-top:14px"></svg>
+        <div class="viz-cap">Copula of the latent times (U₁,U₂): what the current dependence τ looks like. Clayton produces clustering in the lower-left corner.</div>
+        <div class="callout" id="call5"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MODULE 6: WALD POWER ============ -->
+<section class="mod" id="m6" style="border-bottom:none">
+  <div class="wrap">
+    <div class="mod-head"><span class="mk">06</span><h2>Power of the Wald test under a local alternative</h2></div>
+    <p class="mod-lede">Under the local alternative H₁ₙ: θ = θ₀ + n<sup>−1/2</sup>h the Wald statistic
+      has <b>non-central distribution χ²_q(λ)</b>. Via the absolute effect size
+      Δ the non-centrality parameter equals <b>λ = n·hᵀℐ(θ₀)h</b>. Move the parameters and watch
+      how the H₁ distribution 'creeps' onto H₀ under heavy censoring.</p>
+    <div class="grid">
+      <div class="controls">
+        <div class="ctrl">
+          <label>Sample size n <span class="v" id="n6v">200</span></label>
+          <input type="range" id="n6" min="50" max="1500" step="10" value="200">
+        </div>
+        <div class="ctrl">
+          <label>Failure fraction β <span class="v" id="b6v">0.70</span></label>
+          <input type="range" id="b6" min="0.1" max="1" step="0.05" value="0.70">
+        </div>
+        <div class="ctrl">
+          <label>Effect size E <span class="v" id="e6v">0.15</span></label>
+          <input type="range" id="e6" min="0.05" max="0.5" step="0.01" value="0.15">
+          <label class="hint" style="margin-top:6px;color:var(--muted)">effect magnitude |h|=E; the exact non-centrality λ = n·hᵀℐ(θ₀)h uses the operational information ℐ and depends on the direction of h</label>
+        </div>
+        <div class="ctrl">
+          <label>Number of restrictions q (df) <span class="v" id="df6v">4</span></label>
+          <input type="range" id="df6" min="1" max="4" step="1" value="4">
+        </div>
+        <div class="theorem">λ = n·hᵀℐ(θ₀)h<span class="info">?<span class="tip"><b>Non-centrality.</b> Under H₁ₙ the Wald statistic ~ χ²_q(λ). Increasing n strengthens λ linearly; decreasing β (censoring) weakens it linearly. <b>Note.</b> λ is computed exactly as λ = n·hᵀℐ(θ₀)h, with ℐ the operational information of the two-cause Weibull model. For q&gt;1 it depends on the direction of h, so for a fixed |h|=E its value lies between the smallest and largest eigenvalue of ℐ (reported as a range).</span></span></div>
+        <div class="ctrl" style="margin-top:18px">
+          <label>Show</label>
+          <div class="seg" id="view6">
+            <button class="on" data-v="power">Power</button>
+            <button data-v="equiv">Three tests</button>
+          </div>
+        </div>
+      </div>
+      <div class="output">
+        <div class="stat-row" id="s6"></div>
+        <svg class="viz" id="viz6" viewBox="0 0 640 300" width="100%" height="300"></svg>
+        <div class="viz-cap">Distributions of the statistic Wₙ under H₀ (central χ²) and H₁ (non-central χ²); shading denotes power</div>
+        <svg class="viz" id="viz6b" viewBox="0 0 640 240" width="100%" height="240" style="margin-top:14px"></svg>
+        <div class="viz-cap">Power as a function of n at the current β and E; the n required for 80% power is marked</div>
+        <div class="callout" id="call6"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fl">HYBRID CENSORING · ESTIMATION · INFORMATION · PLANNING · DEPENDENCE</div>
+    <div class="ft">The tool implements the results of the doctoral work on the asymptotic
+      theory of competing risks. All computations are reproducible and run in the browser;
+      the formulas match the theorems proved in the work.</div>
+  </div>
+</footer>
+
+<script>
+/* ============ RNG (deterministic, seedable) ============ */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+function expSample(rng,rate){return -Math.log(1-rng())/rate;}
+
+/* ============ core: simulate & fit ============ */
+function simExp(n,a1,a2,beta,seed){
+  const rng=mulberry32(seed); const lam=a1+a2;
+  // TRUE HYBRID SCHEME: τ_n = min(X_(r), T0), where r=round(β·n) is planned failures
+  // and T0 is a fixed horizon. We set T0 as the β-quantile of the failure-time law,
+  // so that on average the hybrid stop coincides with the planned fraction β.
+  const T0=-Math.log(1-Math.min(beta,0.999))/lam;
+  const X=[],c=[];
+  for(let i=0;i<n;i++){const t1=expSample(rng,a1),t2=expSample(rng,a2);
+    X.push(Math.min(t1,t2));c.push(t1<t2?1:2);}
+  const sorted=[...X].sort((p,q)=>p-q);
+  const r=Math.max(1,Math.round(beta*n));
+  const Xr=sorted[Math.min(r-1,n-1)];        // r-th order statistic X_(r)
+  const tau=Math.min(Xr,T0);                  // hybrid stopping time τ_n = min(X_(r), T0)
+  const Z=[],cause=[],obs=[];
+  for(let i=0;i<n;i++){const o=X[i]<=tau;
+    Z.push(Math.min(X[i],tau));cause.push(c[i]);obs.push(o);}
+  return {Z,cause,obs,T0:tau};
+}
+function simWeib(n,a1,a2,g1,g2,beta,seed){
+  const rng=mulberry32(seed);const Z=[],cause=[],obs=[];const X=[];
+  const c=[];
+  for(let i=0;i<n;i++){const u1=rng(),u2=rng();
+    const t1=Math.pow(-Math.log(u1)/a1,1/g1),t2=Math.pow(-Math.log(u2)/a2,1/g2);
+    const x=Math.min(t1,t2);X.push(x);c.push(t1<t2?1:2);}
+  const sorted=[...X].sort((p,q)=>p-q);
+  // TRUE HYBRID SCHEME: τ_n = min(X_(r), T0)
+  const r=Math.max(1,Math.round(beta*n));
+  const Xr=sorted[Math.min(r-1,n-1)];               // r-th order statistic
+  // fixed horizon T0: β-quantile of the overall failure law (numerical)
+  const S=t=>Math.exp(-(a1*Math.pow(t,g1)+a2*Math.pow(t,g2)));
+  let lo=1e-9,hi=1e6;for(let it=0;it<100;it++){const m=(lo+hi)/2;(1-S(m)<beta)?lo=m:hi=m;}
+  const T0=(lo+hi)/2;
+  const tau=Math.min(Xr,T0);                         // hybrid stop
+  for(let i=0;i<n;i++){Z.push(Math.min(X[i],tau));cause.push(c[i]);obs.push(X[i]<=tau);}
+  return {Z,cause,obs,T0:tau,g1,g2};
+}
+function mleExp(sim){
+  let D1=0,D2=0,TAR=0;
+  for(let i=0;i<sim.Z.length;i++){TAR+=sim.Z[i];
+    if(sim.obs[i]){if(sim.cause[i]===1)D1++;else D2++;}}
+  return {est:[D1/TAR,D2/TAR],D1,D2,TAR};
+}
+/* Newton for Weibull, theta=(a1,g1,a2,g2) */
+function newtonWeib(sim,th0,maxit=40,tol=1e-13){
+  let th=th0.slice();const errs=[];const Z=sim.Z,cause=sim.cause,obs=sim.obs;
+  const logZ=Z.map(z=>Math.log(z));
+  for(let it=0;it<maxit;it++){
+    const grad=[0,0,0,0];const H=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+    for(let j=0;j<2;j++){const a=th[2*j],g=th[2*j+1],o=2*j;let Df=0,Zg=0,ZgL=0,ZgL2=0,slog=0;
+      for(let i=0;i<Z.length;i++){const zg=Math.pow(Z[i],g);Zg+=zg;ZgL+=zg*logZ[i];ZgL2+=zg*logZ[i]*logZ[i];
+        if(obs[i]&&cause[i]===(j+1)){Df++;slog+=logZ[i];}}
+      grad[o]=Df/a-Zg; grad[o+1]=Df/g+slog-a*ZgL;
+      H[o][o]=-Df/(a*a);H[o][o+1]=H[o+1][o]=-ZgL;H[o+1][o+1]=-Df/(g*g)-a*ZgL2;}
+    // solve -H * step = grad  (4x4), with Levenberg-style regularization for ill-conditioning
+    let A=neg(H);
+    // regularize if near-singular: add small ridge to diagonal
+    const detA=det4(A);
+    if(!isFinite(detA)||Math.abs(detA)<1e-10){
+      for(let k=0;k<4;k++)A[k][k]+=1e-6*(1+Math.abs(A[k][k]));
+    }
+    let step=solve4(A,grad);
+    // damped step (backtracking) to prevent overshoot at small D_j
+    let damp=1.0;const thNew=k=>th[k]+damp*step[k];
+    // ensure positivity of scale/shape parameters
+    while(damp>1e-3 && (thNew(0)<=0||thNew(1)<=0||thNew(2)<=0||thNew(3)<=0))damp*=0.5;
+    for(let k=0;k<4;k++)th[k]+=damp*step[k];
+    const nrm=Math.hypot(...step)*damp;errs.push(nrm);
+    if(!isFinite(nrm)||nrm<tol)break;
+  }
+  return {est:th,errs};
+}
+// determinant of 4x4 (for regularization check)
+function det4(M){
+  const m=M.map(r=>r.slice());let d=1;
+  for(let i=0;i<4;i++){let p=i;for(let k=i+1;k<4;k++)if(Math.abs(m[k][i])>Math.abs(m[p][i]))p=k;
+    if(Math.abs(m[p][i])<1e-14)return 0;if(p!==i){[m[i],m[p]]=[m[p],m[i]];d=-d;}
+    d*=m[i][i];for(let k=i+1;k<4;k++){const f=m[k][i]/m[i][i];for(let j=i;j<4;j++)m[k][j]-=f*m[i][j];}}
+  return d;
+}
+function neg(M){return M.map(r=>r.map(x=>-x));}
+function solve4(A,b){ // Gaussian elimination 4x4
+  const M=A.map((r,i)=>[...r,b[i]]);const n=4;
+  for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;
+    [M[c],M[p]]=[M[p],M[c]];const pivot=M[c][c]||1e-12;
+    for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/pivot;
+      for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k];}}
+  return M.map((r,i)=>r[n]/(M[i][i]||1e-12));
+}
+function operVar(a1,a2,beta){const lam=a1+a2;return [a1*lam/beta,a2*lam/beta];}
+
+/* --- diagnostics (statistical review) --- */
+function loglikExp(fit,sim){ // exp log-likelihood at MLE
+  const {est,D1,D2,TAR}=fit;
+  return D1*Math.log(est[0])+D2*Math.log(est[1])-(est[0]+est[1])*TAR;
+}
+function loglikWeibCorrect(sim,th){
+  const {Z,cause,obs}=sim;let ll=0;
+  for(let j=0;j<2;j++){const a=th[2*j],g=th[2*j+1];let Sg=0;
+    for(let i=0;i<Z.length;i++){Sg+=Math.pow(Z[i],g);
+      if(obs[i]&&cause[i]===(j+1))ll+=Math.log(a*g*Math.pow(Z[i],g-1));}
+    ll-=a*Sg;}
+  return ll;
+}
+function lrTestExpWeib(sim,fitExp,thWeib){ // LR: exp (2 par) vs Weibull (4 par)
+  const llE=loglikExp(fitExp,sim);const llW=loglikWeibCorrect(sim,thWeib);
+  const LR=2*(llW-llE);return {LR, p:1-chi2cdf(LR,2), df:2, llE, llW};
+}
+function waldGamma1(thWeib,cov){ // H0: g_j=1 (exponential shape)
+  const out=[];[[1,'g₁'],[3,'g₂']].forEach(([idx,name])=>{
+    const W=(thWeib[idx]-1)**2/Math.max(cov[idx][idx],1e-12);
+    out.push({name,gamma:thWeib[idx],W,p:1-chi2cdf(W,1)});});
+  return out;
+}
+/* cumulative incidence function H_j(t) */
+function cifExp(fit,t){const lam=fit.est[0]+fit.est[1];
+  return [fit.est[0]/lam*(1-Math.exp(-lam*t)), fit.est[1]/lam*(1-Math.exp(-lam*t))];}
+function cifWeib(th,t){ // numerical: H_j(t)=int_0^t lambda_j S ds
+  if(t<=0)return [0,0];
+  const S=s=>Math.exp(-(th[0]*Math.pow(s,th[1])+th[2]*Math.pow(s,th[3])));
+  const N=100;const dt=t/N;let H1=0,H2=0;
+  for(let k=1;k<=N;k++){const s=(k-0.5)*dt;
+    H1+=th[0]*th[1]*Math.pow(s,th[1]-1)*S(s)*dt;
+    H2+=th[2]*th[3]*Math.pow(s,th[3]-1)*S(s)*dt;}
+  return [isFinite(H1)?H1:0, isFinite(H2)?H2:0];
+}
+/* Aalen-Johansen nonparametric CIF for cause 1 and 2 */
+function aalenJohansen(sim){
+  const idx=[...sim.Z.keys()].sort((i,j)=>sim.Z[i]-sim.Z[j]);
+  let nAt=sim.Z.length,S=1,H1=0,H2=0;const ts=[],h1=[],h2=[];
+  for(const i of idx){if(sim.obs[i]){const dN=1;
+    if(sim.cause[i]===1)H1+=S*dN/nAt; else H2+=S*dN/nAt;
+    S*=(1-dN/nAt);}
+    ts.push(sim.Z[i]);h1.push(H1);h2.push(H2);nAt--;}
+  return {ts,h1,h2};
+}
+/* median survival with CI (exp: m=ln2/lam) */
+function medianExp(fit){const lam=fit.est[0]+fit.est[1];
+  const se_lam=Math.sqrt(fit.est[0]**2/fit.D1+fit.est[1]**2/fit.D2);
+  const m=Math.log(2)/lam;const se_m=Math.log(2)/(lam*lam)*se_lam;
+  return {m,lo:Math.max(0,m-1.96*se_m),hi:m+1.96*se_m};}
+
+/* Cox-Snell / martingale residuals for goodness-of-fit */
+function coxSnellResiduals(sim,fit,fam){
+  const Z=sim.Z,obs=sim.obs;const r=[];
+  if(fam==='exp'){const lam=fit.est[0]+fit.est[1];
+    for(let i=0;i<Z.length;i++)r.push(lam*Z[i]);} // cumulative hazard = lam*Z
+  else{const th=fit._w;
+    for(let i=0;i<Z.length;i++)r.push(th[0]*Math.pow(Z[i],th[1])+th[2]*Math.pow(Z[i],th[3]));}
+  // Nelson-Aalen cumulative hazard of residuals; if model correct, H(r)~r
+  const idx=[...r.keys()].sort((i,j)=>r[i]-r[j]);
+  let nAt=r.length,Hna=0;const rr=[],HH=[];
+  for(const i of idx){if(obs[i])Hna+=1/nAt;rr.push(r[i]);HH.push(Hna);nAt--;}
+  return {rr,HH};
+}
+/* parametric bootstrap CI for exp a1,a2 */
+function bootstrapCI(sim,fit,fam,beta,B){
+  const n=sim.Z.length;let seed=98765;const rng=mulberry32(seed);
+  const r=Math.max(1,Math.round(beta*n));
+  if(fam==='exp'){
+    const a1h=fit.est[0],a2h=fit.est[1];const lam=a1h+a2h;
+    const T0=-Math.log(1-Math.min(beta,0.999))/lam;
+    const b1=[],b2=[];
+    for(let b=0;b<B;b++){
+      // parametric bootstrap under TRUE hybrid scheme τ=min(X_(r),T0)
+      const X=[],c=[];
+      for(let i=0;i<n;i++){const t1=-Math.log(1-rng())/a1h,t2=-Math.log(1-rng())/a2h;
+        X.push(Math.min(t1,t2));c.push(t1<t2?1:2);}
+      const Xr=[...X].sort((p,q)=>p-q)[Math.min(r-1,n-1)];const tau=Math.min(Xr,T0);
+      let D1=0,D2=0,TAR=0;
+      for(let i=0;i<n;i++){const z=Math.min(X[i],tau);TAR+=z;
+        if(X[i]<=tau){if(c[i]===1)D1++;else D2++;}}
+      if(D1>0)b1.push(D1/TAR);if(D2>0)b2.push(D2/TAR);}
+    b1.sort((a,b)=>a-b);b2.sort((a,b)=>a-b);
+    const q=(arr,p)=>arr[Math.floor(p*(arr.length-1))];
+    return {a1:{lo:q(b1,0.025),hi:q(b1,0.975)}, a2:{lo:q(b2,0.025),hi:q(b2,0.975)}, B};
+  } else {
+    // parametric bootstrap for Weibull under hybrid scheme
+    const th=fit._w;if(!th)return null;
+    const [A1,G1,A2,G2]=th;
+    const S=t=>Math.exp(-(A1*Math.pow(t,G1)+A2*Math.pow(t,G2)));
+    let lo=1e-9,hi=1e6;for(let it=0;it<80;it++){const m=(lo+hi)/2;(1-S(m)<beta)?lo=m:hi=m;}
+    const T0=(lo+hi)/2;
+    const b1=[],b2=[];
+    for(let b=0;b<B;b++){
+      const X=[],c=[];
+      for(let i=0;i<n;i++){const u1=rng(),u2=rng();
+        const t1=Math.pow(-Math.log(u1)/A1,1/G1),t2=Math.pow(-Math.log(u2)/A2,1/G2);
+        X.push(Math.min(t1,t2));c.push(t1<t2?1:2);}
+      const Xr=[...X].sort((p,q)=>p-q)[Math.min(r-1,n-1)];const tau=Math.min(Xr,T0);
+      const bsim={Z:X.map(x=>Math.min(x,tau)),cause:c,obs:X.map(x=>x<=tau)};
+      try{const bt=newtonWeib(bsim,momStartWeib(bsim)).est;
+        if(isFinite(bt[0]))b1.push(bt[0]);if(isFinite(bt[2]))b2.push(bt[2]);}catch(e){}}
+    if(b1.length<10)return null;
+    b1.sort((a,b)=>a-b);b2.sort((a,b)=>a-b);
+    const q=(arr,p)=>arr[Math.floor(p*(arr.length-1))];
+    return {a1:{lo:q(b1,0.025),hi:q(b1,0.975)}, a2:{lo:q(b2,0.025),hi:q(b2,0.975)}, B, weib:true};
+  }
+}
+/* full model comparison: fit both, compare AIC + LR */
+function compareModels(sim){
+  const fitE=mleExp(sim);const llE=loglikExp(fitE,sim);
+  const nfail=fitE.D1+fitE.D2;const aicE=aicBic(llE,2,sim.Z.length).aic;
+  const thW=newtonWeib(sim,momStartWeib(sim)).est;const llW=loglikWeibCorrect(sim,thW);
+  const aicW=aicBic(llW,4,sim.Z.length).aic;
+  const LR=2*(llW-llE);const pLR=1-chi2cdf(LR,2);
+  const dAIC=aicW-aicE; // negative -> Weibull better
+  const better=dAIC<-2?'Weibull':(dAIC>2?'exponential':'comparable');
+  return {aicE,aicW,dAIC,LR,pLR,better,thW,llE,llW};
+}
+function aicBic(ll,k,n){return {aic:2*k-2*ll, bic:k*Math.log(Math.max(n,2))-2*ll};}
+function waldEqual(fit){ // H0: a1=a2, Wald statistic + p-value
+  const {est,D1,D2}=fit;if(D1<2||D2<2)return null;
+  const vdiff=est[0]*est[0]/D1+est[1]*est[1]/D2;
+  const W=(est[0]-est[1])**2/vdiff;
+  return {W, p:1-chi2cdf(W,1), diff:est[0]-est[1]};
+}
+function waldEqualWeib(sim,th){ // H0: a1=a2 for Weibull, using full covariance (off-diagonal accounted)
+  const cov=weibCov(sim,th);
+  const a1=th[0],a2=th[2];
+  // Var(a1-a2) = Var(a1)+Var(a2)-2Cov(a1,a2); positions 0 and 2 in [a1,g1,a2,g2]
+  const vdiff=Math.abs(cov[0][0])+Math.abs(cov[2][2])-2*cov[0][2];
+  if(!(vdiff>0))return null;
+  const W=(a1-a2)**2/vdiff;
+  return {W, p:1-chi2cdf(W,1), diff:a1-a2};
+}
+function waldEqualShapeWeib(sim,th){ // H0: γ1=γ2, using full covariance (positions 1,3)
+  const cov=weibCov(sim,th);
+  const g1=th[1],g2=th[3];
+  const vdiff=Math.abs(cov[1][1])+Math.abs(cov[3][3])-2*cov[1][3];
+  if(!(vdiff>0))return null;
+  const W=(g1-g2)**2/vdiff;
+  return {W, p:1-chi2cdf(W,1), diff:g1-g2};
+}
+function logGamma(x){ // Lanczos approximation
+  const g=7,c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,
+    771.32342877765313,-176.61502916214059,12.507343278686905,
+    -0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-logGamma(1-x);
+  x-=1;let a=c[0];const t=x+g+0.5;
+  for(let i=1;i<g+2;i++)a+=c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+}
+function gammaP(s,x){ // lower regularized incomplete gamma
+  if(x<0||s<=0)return 0;
+  if(x<s+1){let ap=s,sum=1/s,del=sum;
+    for(let nn=0;nn<300;nn++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-13)break;}
+    return sum*Math.exp(-x+s*Math.log(x)-logGamma(s));
+  } else {let bb=x+1-s,cc=1e300,dd=1/bb,h=dd;
+    for(let i=1;i<300;i++){const an=-i*(i-s);bb+=2;dd=an*dd+bb;if(Math.abs(dd)<1e-300)dd=1e-300;
+      cc=bb+an/cc;if(Math.abs(cc)<1e-300)cc=1e-300;dd=1/dd;const del=dd*cc;h*=del;if(Math.abs(del-1)<1e-13)break;}
+    return 1-Math.exp(-x+s*Math.log(x)-logGamma(s))*h;}
+}
+function chi2cdf(x,k){return x<=0?0:gammaP(k/2,x/2);}
+function chi2pdf(x,k){if(x<=0)return 0;
+  return Math.exp((k/2-1)*Math.log(x)-x/2-(k/2)*Math.log(2)-logGamma(k/2));}
+function chi2ppf(p,k){let lo=0,hi=1000;for(let i=0;i<200;i++){const m=(lo+hi)/2;chi2cdf(m,k)<p?lo=m:hi=m;}return (lo+hi)/2;}
+function ncx2cdf(x,k,lam){if(x<=0)return 0;let sum=0,term=Math.exp(-lam/2);
+  for(let j=0;j<400;j++){sum+=term*chi2cdf(x,k+2*j);term*=(lam/2)/(j+1);if(term<1e-15&&j>lam)break;}return sum;}
+function ncx2pdf(x,k,lam){if(x<=0)return 0;let sum=0,term=Math.exp(-lam/2);
+  for(let j=0;j<400;j++){sum+=term*chi2pdf(x,k+2*j);term*=(lam/2)/(j+1);if(term<1e-15&&j>lam)break;}return sum;}
+function erf(x){const t=1/(1+0.3275911*Math.abs(x));
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);
+  return x>=0?y:-y;}
+function asympQuality(n,beta){
+  if(n>=100&&beta>=0.5)return {c:'var(--teal-2)',t:'asymptotics reliable'};
+  if(n>=50&&beta>=0.3)return {c:'var(--amber-2)',t:'range of validity'};
+  return {c:'var(--rose)',t:'information limit'};
+}
+/* survival S(t)=exp(-lam t) with delta-method CI (exp model) */
+/* Kaplan-Meier for overall survival (ignoring cause) */
+/* full 4x4 covariance for Weibull at MLE (observed information inverse) */
+function weibCov(sim,th){
+  const Z=sim.Z,cause=sim.cause,obs=sim.obs,lg=Z.map(Math.log);
+  const H=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for(let j=0;j<2;j++){const a=th[2*j],g=th[2*j+1],o=2*j;let Df=0,ZgL=0,ZgL2=0;
+    for(let i=0;i<Z.length;i++){const zg=Math.pow(Z[i],g);ZgL+=zg*lg[i];ZgL2+=zg*lg[i]*lg[i];
+      if(obs[i]&&cause[i]===(j+1))Df++;}
+    H[o][o]=-Df/(a*a);H[o][o+1]=H[o+1][o]=-ZgL;H[o+1][o+1]=-Df/(g*g)-a*ZgL2;}
+  return inv4(neg(H));
+}
+function inv4(M){ // 4x4 inverse via Gauss-Jordan
+  const n=4;const A=M.map((r,i)=>[...r,...Array.from({length:n},(_,j)=>i===j?1:0)]);
+  for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;
+    [A[c],A[p]]=[A[p],A[c]];const pv=A[c][c]||1e-12;
+    for(let k=0;k<2*n;k++)A[c][k]/=pv;
+    for(let r=0;r<n;r++){if(r===c)continue;const f=A[r][c];
+      for(let k=0;k<2*n;k++)A[r][k]-=f*A[c][k];}}
+  return A.map(r=>r.slice(n));
+}
+function condNumber(sim,th,fam,fit){
+  if(fam==='exp'){ // I = diag(D_j/a_j^2); cond = ratio
+    const i1=fit.D1/fit.est[0]**2, i2=fit.D2/fit.est[1]**2;
+    return Math.max(i1,i2)/Math.min(i1,i2);
+  }
+  const cov=weibCov(sim,th);const info=inv4(cov);
+  // power iteration for max/min eigenvalue (symmetric 4x4)
+  const eig=eigExtremes(info);return eig.max/Math.max(eig.min,1e-9);
+}
+function eigExtremes(M){ // rough max/min eigenvalue via power + inverse power
+  const mul=(A,v)=>A.map(r=>r.reduce((s,x,i)=>s+x*v[i],0));
+  const norm=v=>Math.sqrt(v.reduce((s,x)=>s+x*x,0));
+  let v=[1,0.5,0.3,0.2];for(let it=0;it<50;it++){v=mul(M,v);const nn=norm(v)||1;v=v.map(x=>x/nn);}
+  const mx=norm(mul(M,v));
+  const Mi=inv4(M);let w=[1,0.4,0.6,0.2];for(let it=0;it<50;it++){w=mul(Mi,w);const nn=norm(w)||1;w=w.map(x=>x/nn);}
+  const mn=1/Math.max(norm(mul(Mi,w)),1e-9);
+  return {max:mx,min:mn};
+}
+
+/* honest operational (tau*-truncated) information for two-cause Weibull,
+   equal or unequal shapes. Returns per-cause 2x2 blocks and their inverses. */
+function weibOperInfo(a1,g1,a2,g2,beta){
+  const S=t=>Math.exp(-(a1*Math.pow(t,g1)+a2*Math.pow(t,g2)));
+  // tau*: 1-S(tau*)=beta  (bisection)
+  let lo=1e-6,hi=1e3;for(let it=0;it<200;it++){const m=(lo+hi)/2;((1-S(m))<beta)?lo=m:hi=m;}
+  const tstar=(lo+hi)/2;const out={};
+  // Substitution t = tstar·u^2 concentrates nodes near 0 (handles γ<1 singularity of score);
+  // dt = 2·tstar·u du. Increased resolution N=3000 for accuracy.
+  const N=3000;
+  [[a1,g1,0],[a2,g2,1]].forEach(([aj,gj,idx])=>{
+    let Iaa=0,Iag=0,Igg=0;const du=1/N;
+    for(let k=1;k<=N;k++){const u=(k-0.5)*du;const t=tstar*u*u;const jac=2*tstar*u;
+      const lj=aj*gj*Math.pow(t,gj-1);const fj=lj*S(t);
+      const sa=1/aj, sg=1/gj+Math.log(t);
+      Iaa+=sa*sa*fj*jac*du;Iag+=sa*sg*fj*jac*du;Igg+=sg*sg*fj*jac*du;}
+    const det=Iaa*Igg-Iag*Iag||1e-12;
+    out[idx]={I:[[Iaa,Iag],[Iag,Igg]],Vinv:[Igg/det,Iaa/det],tstar};
+  });
+  return out;
+}
+/* asymptotic se for exponential MLE: se(a_j)=a_j/sqrt(D_j) */
+function seExp(aHat,D){return D>0?aHat/Math.sqrt(D):Infinity;}
+
+/* method-of-moments start (honest, sqrt-n consistent) for display in M3 */
+function momStartExp(sim){const f=mleExp(sim);return f.est;} // exp MoM = MLE (closed form)
+function momStartWeib(sim){ // shape from log-time dispersion, scale from profile
+  const fails=[];for(let i=0;i<sim.Z.length;i++)if(sim.obs[i])fails.push(sim.Z[i]);
+  const lg=fails.map(Math.log);const m=lg.reduce((a,b)=>a+b,0)/lg.length;
+  const v=lg.reduce((a,b)=>a+(b-m)**2,0)/lg.length;
+  const g0=Math.PI/Math.sqrt(6*v);   // Weibull: Var(logX)=pi^2/(6 g^2)
+  // per-cause crude scale a_j0 = D_j / sum Z^{g0}
+  let Zg=0;for(const z of sim.Z)Zg+=Math.pow(z,g0);
+  let D1=0,D2=0;for(let i=0;i<sim.Z.length;i++)if(sim.obs[i]){sim.cause[i]===1?D1++:D2++;}
+  return [Math.max(D1/Zg,1e-3),g0,Math.max(D2/Zg,1e-3),g0];
+}
+
+/* CSV parser: columns time,cause,status(1=failure,0=censored). Header optional. */
+function parseCSV(text){
+  const rows=text.trim().split(/\r?\n/).map(r=>r.split(/[,;\t]/).map(s=>s.trim()));
+  let start=0;
+  if(rows[0].some(x=>isNaN(parseFloat(x))))start=1; // header row
+  const Z=[],cause=[],obs=[];let dropped=0;
+  for(let i=start;i<rows.length;i++){const r=rows[i];if(r.length<2||r[0]==='')continue;
+    const t=parseFloat(r[0]);const c=parseInt(r[1]);
+    const st=r.length>=3?parseInt(r[2]):1;
+    if(!isFinite(t)||t<=0||(c!==1&&c!==2)||(st!==0&&st!==1)){dropped++;continue;} // strict: drop invalid rows
+    Z.push(t);cause.push(c);obs.push(st===1);}
+  return {Z,cause,obs,T0:Z.length?Math.max(...Z):0,dropped};
+}
+function downloadText(name,text){const b=new Blob([text],{type:'text/plain'});
+  const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;
+  a.click();URL.revokeObjectURL(u);}
+function svgToPng(svg,name){const s=new XMLSerializer().serializeToString(svg);
+  const img=new Image();const b=new Blob([s],{type:'image/svg+xml'});const u=URL.createObjectURL(b);
+  img.onload=()=>{const c=document.createElement('canvas');c.width=svg.viewBox.baseVal.width*2;
+    c.height=svg.viewBox.baseVal.height*2;const ctx=c.getContext('2d');
+    ctx.fillStyle='#0e1420';ctx.fillRect(0,0,c.width,c.height);ctx.scale(2,2);ctx.drawImage(img,0,0);
+    c.toBlob(bl=>{const uu=URL.createObjectURL(bl);const a=document.createElement('a');a.href=uu;
+      a.download=name;a.click();});URL.revokeObjectURL(u);};img.src=u;}
+
+/* ============ svg helpers ============ */
+const NS='http://www.w3.org/2000/svg';
+function clr(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function svgEl(t,at){const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e;}
+function clearSvg(el){while(el.firstChild)el.removeChild(el.firstChild);}
+function axes(svg,W,H,pad){svg.appendChild(svgEl('line',{x1:pad,y1:H-pad,x2:W-pad,y2:H-pad,stroke:clr('--line')}));
+  svg.appendChild(svgEl('line',{x1:pad,y1:pad,x2:pad,y2:H-pad,stroke:clr('--line')}));}
+function txt(svg,x,y,s,col,sz,anch){const t=svgEl('text',{x,y,fill:col||clr('--muted'),
+  'font-family':clr('--mono')||'monospace','font-size':sz||10,'text-anchor':anch||'middle'});t.textContent=s;svg.appendChild(t);}
+
+function statBlock(el,items){el.innerHTML='';items.forEach(it=>{
+  const d=document.createElement('div');d.className='stat'+(it.cls?' '+it.cls:'');
+  d.innerHTML=`<div class="sv">${it.v}</div><div class="sk">${it.k}</div>`;el.appendChild(d);});}
+
+/* ============ MODULE 1 ============ */
+const APP_VERSION='v1.0.0';
+const M1={fam:'exp',seed:1,userData:null};
+function readNum(id){return parseFloat(document.getElementById(id).value);}
+function bindRange(id,vid,fmt){const r=document.getElementById(id),v=document.getElementById(vid);
+  const upd=()=>{v.textContent=fmt?fmt(r.value):r.value;};r.addEventListener('input',upd);upd();}
+function run1(){
+  const beta=readNum('b1'),n=Math.round(readNum('n1')),a1=readNum('a11'),a2=readNum('a21'),g1s=readNum('g1a'),g2s=readNum('g1b');
+  let sim,fit,truth=null;
+  if(M1.userData){
+    sim=M1.userData;
+    if(M1.fam==='exp'){fit=mleExp(sim);}
+    else{const nw=newtonWeib(sim,momStartWeib(sim));fit={est:[nw.est[0],nw.est[2]],_w:nw.est,
+      D1:sim.obs.filter((o,i)=>o&&sim.cause[i]===1).length,
+      D2:sim.obs.filter((o,i)=>o&&sim.cause[i]===2).length};}
+  } else {
+    truth=[a1,a2];
+    if(M1.fam==='exp'){sim=simExp(n,a1,a2,beta,M1.seed);fit=mleExp(sim);}
+    else{sim=simWeib(n,a1,a2,g1s,g2s,beta,M1.seed);
+      const nw=newtonWeib(sim,momStartWeib(sim));
+      fit={est:[nw.est[0],nw.est[2]],_w:nw.est,
+        D1:sim.obs.filter((o,i)=>o&&sim.cause[i]===1).length,
+        D2:sim.obs.filter((o,i)=>o&&sim.cause[i]===2).length};}
+  }
+  const nfail=fit.D1+fit.D2;
+  // asymptotic 95% CI: exponential — closed form; Weibull — full observed information (weibCov)
+  let se1,se2;
+  if(fit._w){
+    // Weibull: use full 4×4 observed-information covariance (correct, off-diagonal accounted)
+    const cov=weibCov(sim,fit._w);
+    se1=Math.sqrt(Math.abs(cov[0][0])); // se(a₁): position 0 in [a₁,γ₁,a₂,γ₂]
+    se2=Math.sqrt(Math.abs(cov[2][2])); // se(a₂): position 2
+  } else {
+    se1=seExp(fit.est[0],fit.D1); se2=seExp(fit.est[1],fit.D2);
+  }
+  const ci=(v,se)=>isFinite(se)?`[${(v-1.96*se).toFixed(3)}, ${(v+1.96*se).toFixed(3)}]`:'—';
+  const ok1=truth?Math.abs(fit.est[0]-truth[0])<=1.96*se1:true;
+  const ok2=truth?Math.abs(fit.est[1]-truth[1])<=1.96*se2:true;
+  statBlock(document.getElementById('s1'),[
+    {v:fit.est[0].toFixed(3),k:'MLE a₁'+(truth?' (true '+truth[0].toFixed(1)+')':''),cls:ok1?'good':'warn'},
+    {v:fit.est[1].toFixed(3),k:'MLE a₂'+(truth?' (true '+truth[1].toFixed(1)+')':''),cls:ok2?'good':'warn'},
+    {v:nfail,k:'events observed',cls:''},
+    {v:M1.userData?(100*nfail/sim.Z.length).toFixed(0)+'%':(100*nfail/n).toFixed(0)+'%',
+      k:'failure fraction (τₙ='+sim.T0.toFixed(2)+')',cls:''},
+  ]);
+  // show CI line under stats
+  let ciEl=document.getElementById('ci1');
+  if(!ciEl){ciEl=document.createElement('div');ciEl.id='ci1';
+    ciEl.style.cssText='font-family:var(--mono);font-size:12px;color:var(--teal-2);margin:-8px 0 16px';
+    document.getElementById('s1').after(ciEl);}
+  if(fit._w){
+    // Weibull: also show shape estimates γ₁, γ₂ with their CIs
+    const cov=weibCov(sim,fit._w);
+    const g1h=fit._w[1], g2h=fit._w[3];
+    const seg1=Math.sqrt(Math.abs(cov[1][1])), seg2=Math.sqrt(Math.abs(cov[3][3]));
+    ciEl.innerHTML=`95% CI:&nbsp; a₁ ∈ ${ci(fit.est[0],se1)} &nbsp;·&nbsp; a₂ ∈ ${ci(fit.est[1],se2)}<br>`+
+      `<span style="color:var(--teal-2)">shapes:</span>&nbsp; γ̂₁=${g1h.toFixed(2)} ∈ ${ci(g1h,seg1)} &nbsp;·&nbsp; γ̂₂=${g2h.toFixed(2)} ∈ ${ci(g2h,seg2)}`;
+  } else {
+    ciEl.innerHTML=`95% CI:&nbsp; a₁ ∈ ${ci(fit.est[0],se1)} &nbsp;·&nbsp; a₂ ∈ ${ci(fit.est[1],se2)}`;
+  }
+  drawSample(sim,M1.userData?sim.Z.length:n);
+  M1._last={sim,fit,se1,se2,truth};
+  renderDiagnostics(sim,fit);
+  drawSurvival(sim,fit);
+  drawResiduals(sim,fit);
+  const c=document.getElementById('call1');
+  if(M1.userData)c.innerHTML='<b>Your data are loaded</b> ('+sim.Z.length+' observations). The estimate and the 95% confidence interval are built from the operational information. CSV columns: time, cause (1/2), status (1=event, 0=censored).';
+  else if(nfail<20)c.innerHTML='<b>Few failures.</b> A rare cause is seen only a few times, the estimate is unstable, the CI is wide. This <b>information limit</b>: increase n or β.';
+  else if(M1.fam==='wb')c.innerHTML='Weibull fitted by the Newton method from <b>method of moments</b> (a genuine √n-consistent start, without knowing the truth). The CI reflects the operational information.';
+  else c.innerHTML='MLE of the exponential model: âⱼ = (cause-j failures)/(time at risk), se = âⱼ/√Dⱼ. <b>Confidence interval</b> shows the true uncertainty of a single sample.';
+}
+function dTip(label,val,tip){ // hoverable diagnostic term
+  return `<span class="dterm">${label}<span class="dtip">${tip}</span></span> ${val}`;
+}
+function interpKappa(k){return k<50?'condition number <50: the information is well conditioned, the estimates are stable.':
+  k<1000?'moderate conditioning: the estimates are broadly reliable, but check sensitivity.':
+  'high κ: the information is poorly conditioned; the parameters are nearly degenerate, increase n or β.';}
+function interpP(p){return p<0.05?`p=${p<1e-3?p.toExponential(1):p.toFixed(3)}<0.05: hypothesis rejected at the 5% level.`:
+  `p=${p.toFixed(3)}≥0.05: no grounds to reject the hypothesis.`;}
+function renderDiagnostics(sim,fit){
+  const el=document.getElementById('diag1');const nfail=fit.D1+fit.D2;
+  const n=sim.Z.length;const beta=nfail/n;
+  const q=asympQuality(n,beta);
+  const minD=Math.min(fit.D1,fit.D2);
+  const dPar=M1.fam==='wb'?2:1; // params per cause: Weibull=2 (a,g), exp=1 (a)
+  const warnThresh=10*dPar;
+  const smallWarn=minD<warnThresh?` <span style="color:var(--amber-2)" title="few events relative to the parameter dimension (${dPar} per cause); p-value approximate">⚠ min(D)=${minD}&lt;${warnThresh}</span>`:'';
+  // auto model recommendation (always computed — works for both simulated and user data)
+  let recHtml='';
+  {
+    try{const cm=compareModels(sim);
+      const col=cm.better==='comparable'?'var(--teal-2)':'var(--amber-2)';
+      recHtml=`<div style="margin-bottom:10px;padding:8px 10px;background:var(--ink);border-radius:6px;font-family:var(--mono);font-size:11.5px">
+        <span style="color:var(--muted)">Auto-recommendation:</span> <b style="color:${col}">${cm.better==='comparable'?'models comparable (take the simpler one)':cm.better}</b>
+        <span style="color:var(--muted)">ΔAIC=${cm.dAIC.toFixed(1)}, LR p=${cm.pLR<1e-3?cm.pLR.toExponential(1):cm.pLR.toFixed(3)}</span></div>`;
+    }catch(e){}
+  }
+  let block='';
+  if(M1.fam==='exp'){
+    const ll=loglikExp(fit,sim);const ab=aicBic(ll,2,sim.Z.length);
+    const med=medianExp(fit);
+    const w=waldEqual(fit);
+    let waldHtml='';
+    if(w){const rej=w.p<0.05;
+      waldHtml=`${dTip('H₀: a₁=a₂','',`Tests whether the cause intensities are equal. ${interpP(w.p)} ${rej?'The causes differ in rate.':'The difference is not significant.'}`)}→ W=${w.W.toFixed(1)}, p=${w.p<1e-3?w.p.toExponential(1):w.p.toFixed(3)} <b style="color:${rej?'var(--rose)':'var(--teal-2)'}">${rej?'rejected':'not rejected'}</b>${smallWarn}`;}
+    block=`
+      ${dTip('AIC',ab.aic.toFixed(1),'Akaike information criterion: the smaller, the better the balance of fit and complexity. Compare models by the difference ΔAIC (>2 means noticeably).')} &nbsp; ${dTip('BIC',ab.bic.toFixed(1),'Bayesian information criterion: like AIC, but penalises complexity more strongly. Smaller means better.')}<br>
+      ${dTip('median T',med.m.toFixed(3)+` [${med.lo.toFixed(3)}, ${med.hi.toFixed(3)}]`,'Time by which half of the units fail, with 95% CI (delta method).')}<br>
+      ${waldHtml}`;
+  } else {
+    const th=fit._w;const cov=weibCov(sim,th);
+    const llW=loglikWeibCorrect(sim,th);const abW=aicBic(llW,4,sim.Z.length);
+    const lr=lrTestExpWeib(sim,mleExp(sim),th);
+    const rejExp=lr.p<0.05;
+    const g1=waldGamma1(th,cov);
+    const gTxt=g1.map(x=>`${x.name}=${x.gamma.toFixed(2)} (p=${x.p<1e-3?x.p.toExponential(1):x.p.toFixed(3)})`).join(', ');
+    const anyShape=g1.some(x=>x.p<0.05);
+    // Wald test H0: a1=a2 for Weibull (full covariance, off-diagonal accounted)
+    const wEqW=waldEqualWeib(sim,th);
+    const wEqS=waldEqualShapeWeib(sim,th);
+    let waldEqWHtml='';
+    if(wEqW){const rej=wEqW.p<0.05;
+      waldEqWHtml=`<br>${dTip('H₀: a₁=a₂','',`Tests equality of the cause intensities for Weibull (full covariance, accounting for Cov(a₁,a₂)). ${interpP(wEqW.p)} ${rej?'The causes differ in rate.':'The difference is not significant.'}`)}→ W=${wEqW.W.toFixed(1)}, p=${wEqW.p<1e-3?wEqW.p.toExponential(1):wEqW.p.toFixed(3)} <b style="color:${rej?'var(--rose)':'var(--teal-2)'}">${rej?'rejected':'not rejected'}</b>`;}
+    if(wEqS){const rej=wEqS.p<0.05;
+      waldEqWHtml+=`<br>${dTip('H₀: γ₁=γ₂','',`Tests equality of the causes' shape parameters (whether the time dependence of the failure mechanisms is the same). ${interpP(wEqS.p)} ${rej?'The shapes differ.':'The shapes can be considered equal.'}`)}→ W=${wEqS.W.toFixed(1)}, p=${wEqS.p<1e-3?wEqS.p.toExponential(1):wEqS.p.toFixed(3)} <b style="color:${rej?'var(--rose)':'var(--teal-2)'}">${rej?'rejected':'not rejected'}</b>`;}
+    block=`
+      ${dTip('AIC',abW.aic.toFixed(1),'Akaike information criterion: smaller means better. Accounts for the 4 Weibull parameters.')} &nbsp; ${dTip('BIC',abW.bic.toFixed(1),'Bayesian criterion: penalises complexity more strongly.')} &nbsp;<span style="color:var(--muted)">se(a₁)=</span>${Math.sqrt(Math.abs(cov[0][0])).toFixed(3)}<br>
+      ${dTip('LR (Weibull vs exp.)','',`Likelihood-ratio test: checks whether the Weibull flexibility is needed. ${interpP(lr.p)}`)} ${lr.LR.toFixed(1)}, p=${lr.p<1e-3?lr.p.toExponential(1):lr.p.toFixed(3)} <b style="color:${rejExp?'var(--rose)':'var(--teal-2)'}">${rejExp?'Weibull better':'exp. is sufficient'}</b><br>
+      ${dTip('H₀: shape γ=1','',`Tests whether the Weibull shape differs from the exponential (γ=1 = exponential). ${anyShape?'The shape differs significantly.':'The shape is close to exponential.'}`)}→ ${gTxt} <b style="color:${anyShape?'var(--rose)':'var(--teal-2)'}">${anyShape?'shape ≠ exp.':'≈ exp.'}</b>${waldEqWHtml}${smallWarn}`;
+  }
+  const kappa=condNumber(sim,fit._w||[fit.est[0],1,fit.est[1],1],M1.fam,fit);
+  el.innerHTML=`
+    ${recHtml}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${q.c};display:inline-block"></span>
+      <span style="font-family:var(--mono);font-size:12px;color:${q.c}">${q.t}</span>
+      <span class="dterm" style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto">condition number κ=${kappa.toFixed(1)}<span class="dtip">${interpKappa(kappa)}</span></span>
+    </div>
+    <div style="font-family:var(--mono);font-size:12.5px;color:var(--parch);line-height:1.9">${block}</div>`;
+}
+function drawSurvival(sim,fit){
+  const svg=document.getElementById('viz1b');if(!svg)return;clearSvg(svg);
+  const W=640,H=240,pad=42;axes(svg,W,H,pad);
+  const zmax=Math.max(...sim.Z);if(!isFinite(zmax)||zmax<=0)return;
+  const tmax=zmax*0.95;
+  const X=t=>pad+(t/tmax)*(W-2*pad);const Y=h=>H-pad-(isFinite(h)?h:0)*(H-2*pad);
+  // horizontal gridlines
+  for(let hh=0.25;hh<1;hh+=0.25){svg.appendChild(svgEl('line',{x1:pad,y1:Y(hh),x2:W-pad,y2:Y(hh),stroke:clr('--line'),opacity:.4}));
+    txt(svg,pad-6,Y(hh)+3,hh.toFixed(2),clr('--muted'),9,'end');}
+  // parametric CIF curves for both causes
+  const N=80;const c1=[],c2=[];
+  for(let k=0;k<=N;k++){const t=tmax*k/N;
+    const H=(M1.fam==='exp')?cifExp(fit,t):cifWeib(fit._w,t);
+    c1.push([X(t),Y(H[0])]);c2.push([X(t),Y(H[1])]);}
+  const pathOf=pts=>pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  // Aalen-Johansen step curves
+  const aj=aalenJohansen(sim);
+  const stepOf=(ts,hs)=>{let d='',py=Y(0);for(let i=0;i<ts.length;i++){if(ts[i]>tmax)break;
+    const x=X(ts[i]),y=Y(hs[i]);d+=(i?`L${x} ${py} L${x} ${y} `:`M${pad} ${Y(0)} L${x} ${Y(0)} L${x} ${y} `);py=y;}return d;};
+  svg.appendChild(svgEl('path',{d:stepOf(aj.ts,aj.h1),stroke:clr('--amber'),'stroke-width':1.2,fill:'none','stroke-dasharray':'3 3',opacity:.7}));
+  svg.appendChild(svgEl('path',{d:stepOf(aj.ts,aj.h2),stroke:clr('--teal'),'stroke-width':1.2,fill:'none','stroke-dasharray':'3 3',opacity:.7}));
+  svg.appendChild(svgEl('path',{d:pathOf(c1),stroke:clr('--amber'),'stroke-width':2.4,fill:'none'}));
+  svg.appendChild(svgEl('path',{d:pathOf(c2),stroke:clr('--teal'),'stroke-width':2.4,fill:'none'}));
+  txt(svg,pad-8,pad+4,'H(t)',clr('--muted'),10,'end');
+  txt(svg,W-pad,H-pad+16,'t',clr('--muted'),10,'end');
+  txt(svg,pad+6,pad+2,'▬ cause 1 (param.)',clr('--amber-2'),10,'start');
+  txt(svg,pad+6,pad+16,'▬ cause 2 (param.)',clr('--teal-2'),10,'start');
+  txt(svg,pad+6,pad+30,'┄ Aalen–Johansen',clr('--muted'),10,'start');
+}
+function drawResiduals(sim,fit){
+  const svg=document.getElementById('viz1c');if(!svg)return;clearSvg(svg);
+  const W=640,H=240,pad=42;axes(svg,W,H,pad);
+  const {rr,HH}=coxSnellResiduals(sim,fit,M1.fam);
+  const finite=rr.map((r,i)=>[r,HH[i]]).filter(p=>isFinite(p[0])&&isFinite(p[1]));
+  if(!finite.length)return;
+  const rmax=Math.min(Math.max(...finite.map(p=>p[0]),1),4);
+  const hmax=Math.max(Math.max(...finite.map(p=>p[1]),1),rmax);
+  const X=r=>pad+(Math.min(r,rmax)/rmax)*(W-2*pad);
+  const Y=h=>H-pad-(Math.min(h,hmax)/hmax)*(H-2*pad);
+  svg.appendChild(svgEl('line',{x1:X(0),y1:Y(0),x2:X(rmax),y2:Y(rmax),
+    stroke:clr('--muted'),'stroke-dasharray':'5 4','stroke-width':1.3}));
+  txt(svg,X(rmax)-4,Y(rmax)-8,'perfect fit (H=r)',clr('--muted'),9,'end');
+  let d='';finite.forEach((p,i)=>{d+=(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)+' ';});
+  svg.appendChild(svgEl('path',{d,stroke:clr('--amber'),'stroke-width':2,fill:'none'}));
+  // R^2 of H(r) vs r (fit quality with the 45-degree line)
+  const pts=finite.filter(p=>p[0]<=rmax);
+  const mx=pts.reduce((s,p)=>s+p[0],0)/pts.length, my=pts.reduce((s,p)=>s+p[1],0)/pts.length;
+  let ssTot=0,ssRes=0;pts.forEach(p=>{ssTot+=(p[1]-my)**2;ssRes+=(p[1]-p[0])**2;});
+  const R2=Math.max(0,1-ssRes/(ssTot||1));
+  const goodFit=R2>0.95;
+  svg.appendChild(svgEl('rect',{x:pad+8,y:pad+6,width:118,height:22,rx:4,
+    fill:'var(--ink-2)',stroke:goodFit?clr('--teal'):clr('--amber'),opacity:.95}));
+  txt(svg,pad+16,pad+21,`R² = ${R2.toFixed(3)} ${goodFit?'✓':'⚠'}`,goodFit?clr('--teal-2'):clr('--amber-2'),11,'start');
+  txt(svg,pad-8,pad+4,'H(r)',clr('--muted'),10,'end');
+  txt(svg,W-pad,H-pad+16,'Cox–Snell residual r',clr('--muted'),10,'end');
+}
+function drawSample(sim,n){
+  const svg=document.getElementById('viz1');clearSvg(svg);const W=640,H=240,pad=34;
+  axes(svg,W,H,pad);
+  const show=Math.min(n,260);const step=(W-2*pad)/show;
+  const maxZ=Math.max(...sim.Z.slice(0,show),sim.T0)*1.05;
+  // horizon line
+  const yh=v=>H-pad-(v/maxZ)*(H-2*pad);
+  const xT0=pad; // draw T0 as horizontal reference
+  const T0y=H-pad-(sim.T0/maxZ)*(H-2*pad);
+  svg.appendChild(svgEl('line',{x1:pad,y1:T0y,x2:W-pad,y2:T0y,stroke:clr('--rose'),
+    'stroke-dasharray':'4 4','stroke-width':1}));
+  txt(svg,W-pad-4,T0y-6,'τₙ (horizon)',clr('--rose'),10,'end');
+  for(let i=0;i<show;i++){const x=pad+i*step;const y=H-pad-(sim.Z[i]/maxZ)*(H-2*pad);
+    const col=!sim.obs[i]?clr('--muted'):(sim.cause[i]===1?clr('--amber'):clr('--teal'));
+    const circ=svgEl('circle',{cx:x,cy:y,r:sim.obs[i]?2.4:1.8,fill:col,
+      opacity:sim.obs[i]?0.9:0.4});
+    if(M1._animate){circ.style.opacity='0';
+      circ.style.transition='opacity .4s';circ.style.transitionDelay=(i/show*0.3)+'s';
+      requestAnimationFrame(()=>{circ.style.opacity=sim.obs[i]?0.9:0.4;});}
+    svg.appendChild(circ);}
+  txt(svg,pad-6,pad+4,'time',clr('--muted'),10,'end');
+  // legend with counts D1, D2, censored
+  let D1=0,D2=0,Cn=0;for(let i=0;i<sim.Z.length;i++){if(!sim.obs[i])Cn++;else if(sim.cause[i]===1)D1++;else D2++;}
+  const lx=W-pad-150,ly=pad+2;
+  svg.appendChild(svgEl('circle',{cx:lx,cy:ly,r:3,fill:clr('--amber')}));
+  txt(svg,lx+8,ly+4,`cause 1: ${D1}`,clr('--amber-2'),10,'start');
+  svg.appendChild(svgEl('circle',{cx:lx,cy:ly+16,r:3,fill:clr('--teal')}));
+  txt(svg,lx+8,ly+20,`cause 2: ${D2}`,clr('--teal-2'),10,'start');
+  svg.appendChild(svgEl('circle',{cx:lx,cy:ly+32,r:3,fill:clr('--muted'),opacity:.5}));
+  txt(svg,lx+8,ly+36,`censored: ${Cn}`,clr('--muted'),10,'start');
+}
+/* fam toggle m1 */
+document.getElementById('fam1').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  M1.fam=b.dataset.fam;document.querySelectorAll('#c1 .wbonly').forEach(x=>x.style.display=M1.fam==='wb'?'block':'none');run1();});
+['b1','n1','a11','a21','g1a','g1b'].forEach(id=>document.getElementById(id).addEventListener('input',run1));
+document.getElementById('resim1').addEventListener('click',()=>{M1.seed=Math.floor(Math.random()*1e6);M1.userData=null;document.getElementById('csvinfo1').textContent='';M1._animate=true;run1();M1._animate=false;});
+document.getElementById('csvbtn1').addEventListener('click',()=>document.getElementById('csv1').click());
+document.getElementById('csv1').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;
+  const rd=new FileReader();rd.onload=ev=>{
+    try{const data=parseCSV(ev.target.result);
+      if(!data.Z.length){document.getElementById('csvinfo1').innerHTML='<span style="color:var(--rose)">✗ no valid rows found. Format: time,cause,status</span>';return;}
+      M1.userData=data;
+      let D1=0,D2=0,Cn=0;for(let i=0;i<data.Z.length;i++){if(!data.obs[i])Cn++;else if(data.cause[i]===1)D1++;else D2++;}
+      // validation warnings
+      let warn='';
+      if(D1<5||D2<5)warn+='<span style="color:var(--amber-2)">⚠ few failures of one cause (D₁='+D1+', D₂='+D2+')</span><br>';
+      if(Cn===0)warn+='<span style="color:var(--amber-2)">⚠ no censored observations</span><br>';
+      warn+='<span style="color:var(--muted)">ℹ the horizon τₙ is taken as the maximum observation time; the MLE uses the observed times and statuses and does not depend on the value of τₙ.</span><br>';
+      // preview first 5 rows
+      let prev='<table style="width:100%;font-size:10.5px;margin-top:6px;border-collapse:collapse">'+
+        '<tr style="color:var(--muted)"><td>time</td><td>cause</td><td>status</td></tr>';
+      for(let i=0;i<Math.min(5,data.Z.length);i++)
+        prev+=`<tr><td>${data.Z[i].toFixed(2)}</td><td>${data.cause[i]}</td><td>${data.obs[i]?'event':'censored'}</td></tr>`;
+      prev+='</table>';
+      document.getElementById('csvinfo1').innerHTML=
+        `<span style="color:var(--teal-2)">✓ loaded ${data.Z.length} rows</span><br>`+
+        `<span style="color:var(--muted)">cause 1: ${D1} · cause 2: ${D2} · censored: ${Cn}</span><br>`+
+        warn+prev;
+      run1();
+    }catch(err){document.getElementById('csvinfo1').innerHTML='<span style="color:var(--rose)">✗ CSV read error</span>';}};
+  rd.readAsText(f);});
+document.getElementById('exmpl1').addEventListener('click',()=>{
+  const ex='time,cause,status\n1.24,1,1\n0.83,2,1\n2.11,1,1\n0.55,1,1\n1.92,2,1\n3.40,1,0\n0.71,2,1\n1.55,1,1\n2.33,2,1\n0.94,1,1\n1.68,1,1\n0.42,2,1\n2.87,1,0\n1.13,1,1\n0.66,2,1';
+  downloadText('example_competing_risks.csv',ex);});
+document.getElementById('exp1').addEventListener('click',()=>{if(!M1._last)return;
+  const {sim,fit,se1,se2}=M1._last;
+  let csv='parameter,estimate,se,ci_low,ci_high\n';
+  csv+=`a1,${fit.est[0].toFixed(6)},${se1.toFixed(6)},${(fit.est[0]-1.96*se1).toFixed(6)},${(fit.est[0]+1.96*se1).toFixed(6)}\n`;
+  csv+=`a2,${fit.est[1].toFixed(6)},${se2.toFixed(6)},${(fit.est[1]-1.96*se2).toFixed(6)},${(fit.est[1]+1.96*se2).toFixed(6)}\n`;
+  csv+=`n,${sim.Z.length},,,\nfailures,${fit.D1+fit.D2},,,\n`;
+  downloadText('mle_result.csv',csv);});
+/* model comparison */
+document.getElementById('compare1').addEventListener('click',()=>{
+  if(!M1._last)return;const sim=M1._last.sim;const cm=compareModels(sim);
+  let el=document.getElementById('cmpBox');
+  if(!el){el=document.createElement('div');el.id='cmpBox';el.className='callout';
+    el.style.borderLeftColor='var(--teal)';document.getElementById('call1').before(el);}
+  const rec=cm.better;
+  el.innerHTML=`<b>Comparison of models on the same data:</b><br>
+    <span style="font-family:var(--mono);font-size:12.5px">
+    AIC exp = ${cm.aicE.toFixed(1)} &nbsp; AIC Weibull = ${cm.aicW.toFixed(1)} &nbsp; ΔAIC = ${cm.dAIC.toFixed(1)}<br>
+    LR = ${cm.LR.toFixed(1)}, p = ${cm.pLR<1e-3?cm.pLR.toExponential(1):cm.pLR.toFixed(3)}</span><br>
+    Recommendation: <b style="color:var(--amber-2)">${rec==='comparable'?'models comparable, take the simpler one (exp.)':rec+' describes the data better'}</b>`;
+});
+/* bootstrap CI */
+document.getElementById('boot1').addEventListener('click',()=>{
+  if(!M1._last)return;const {sim,fit}=M1._last;
+  if(M1.fam!=='exp'){alert('The bootstrap is implemented for the exponential model (closed form, fast).');return;}
+  const btn=document.getElementById('boot1');const orig=btn.innerHTML;
+  btn.innerHTML='<span class="spin"></span>B=999…';btn.disabled=true;
+  setTimeout(()=>{
+    const beta=(fit.D1+fit.D2)/sim.Z.length;
+    const fam=M1.fam||'exp';
+    const bc=bootstrapCI(sim,fit,fam,beta,fam==='wb'?400:999);
+    let el=document.getElementById('bootBox');
+    if(!el){el=document.createElement('div');el.id='bootBox';el.className='callout';
+      el.style.borderLeftColor='var(--teal-2)';document.getElementById('call1').before(el);}
+    if(!bc){el.innerHTML='<span style="color:var(--rose)">Bootstrap unavailable: not enough data for stable re-estimation.</span>';btn.innerHTML=orig;btn.disabled=false;return;}
+    // point estimates and asymptotic SE depending on family
+    let a1h,a2h,se1,se2;
+    if(fam==='wb'){a1h=fit._w[0];a2h=fit._w[2];const cov=weibCov(sim,fit._w);
+      se1=Math.sqrt(Math.abs(cov[0][0]));se2=Math.sqrt(Math.abs(cov[2][2]));}
+    else{a1h=fit.est[0];a2h=fit.est[1];se1=fit.est[0]/Math.sqrt(fit.D1);se2=fit.est[1]/Math.sqrt(fit.D2);}
+    const lbl=fam==='wb'?'(Weibull, parametric bootstrap)':'';
+    el.innerHTML=`<b>Parametric bootstrap (B=${bc.B}) ${lbl}:</b><br>
+      <span style="font-family:var(--mono);font-size:12.5px">
+      a₁: bootstrap [${bc.a1.lo.toPrecision(3)}, ${bc.a1.hi.toPrecision(3)}] &nbsp;vs&nbsp; asympt. [${(a1h-1.96*se1).toPrecision(3)}, ${(a1h+1.96*se1).toPrecision(3)}]<br>
+      a₂: bootstrap [${bc.a2.lo.toPrecision(3)}, ${bc.a2.hi.toPrecision(3)}] &nbsp;vs&nbsp; asympt. [${(a2h-1.96*se2).toPrecision(3)}, ${(a2h+1.96*se2).toPrecision(3)}]</span><br>
+      <span style="color:var(--muted);font-size:12px">For small n the bootstrap intervals are usually wider and more accurate than the asymptotic ones.</span>`;
+    btn.innerHTML=orig;btn.disabled=false;
+  },30);
+});
+/* HTML report export */
+document.getElementById('report1').addEventListener('click',()=>{
+  if(!M1._last)return;const {sim,fit,se1,se2,truth}=M1._last;
+  const nfail=fit.D1+fit.D2;const n=sim.Z.length;
+  const viz=document.getElementById('viz1').outerHTML;
+  const cif=document.getElementById('viz1b').outerHTML;
+  const diag=document.getElementById('diag1').innerHTML;
+  const html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>Report: competing risks</title>
+<style>body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a1a;line-height:1.6}
+h1{font-size:22px;border-bottom:2px solid #e0a437;padding-bottom:8px}h2{font-size:16px;color:#555;margin-top:28px}
+table{border-collapse:collapse;width:100%;margin:12px 0}td,th{border:1px solid #ddd;padding:8px 12px;text-align:left;font-family:monospace}
+th{background:#f5f5f5}svg{max-width:100%;background:#0e1420;border-radius:6px;margin:10px 0}
+.meta{color:#888;font-size:13px}</style></head><body>
+<h1>Report: estimation of competing risks under hybrid censoring</h1>
+<p class="meta">Model: ${M1.fam==='exp'?'exponential':'Weibull'} · generated by HybridCR ${APP_VERSION}, seed ${M1.seed} · ${new Date().toLocaleString('ru')}</p>
+<h2>Parameters and data</h2>
+<table><tr><th>Parameter</th><th>Value</th></tr>
+<tr><td>Sample size n</td><td>${n}</td></tr>
+<tr><td>Failures observed</td><td>${nfail} (${(100*nfail/n).toFixed(0)}%)</td></tr>
+<tr><td>Horizon τₙ</td><td>${sim.T0.toFixed(3)}</td></tr>${truth?`
+<tr><td>True a₁, a₂</td><td>${truth[0].toFixed(2)}, ${truth[1].toFixed(2)}</td></tr>`:''}</table>
+<h2>Maximum-likelihood estimates</h2>
+<table><tr><th>Parameter</th><th>Estimate</th><th>95% CI</th></tr>
+<tr><td>a₁</td><td>${fit.est[0].toFixed(4)}</td><td>[${(fit.est[0]-1.96*se1).toFixed(3)}, ${(fit.est[0]+1.96*se1).toFixed(3)}]</td></tr>
+<tr><td>a₂</td><td>${fit.est[1].toFixed(4)}</td><td>[${(fit.est[1]-1.96*se2).toFixed(3)}, ${(fit.est[1]+1.96*se2).toFixed(3)}]</td></tr></table>
+<h2>Diagnostic</h2><div style="font-family:monospace;font-size:13px">${diag}</div>
+<h2>Observations</h2>${viz}
+<h2>Cumulative incidence functions</h2>${cif}
+<p class="meta">The tool implements the asymptotic theory of competing risks (doctoral work of N. S. Nurmukhamedova).</p>
+</body></html>`;
+  downloadText('crm_report.html',html);
+});
+bindRange('b1','b1v');bindRange('n1','n1v');bindRange('a11','a11v',v=>(+v).toFixed(1));
+bindRange('a21','a21v',v=>(+v).toFixed(1));bindRange('g1a','g1av',v=>(+v).toFixed(1));bindRange('g1b','g1bv',v=>(+v).toFixed(1));
+
+/* ============ MODULE 2 ============ */
+const M2={fam:'exp'};
+document.getElementById('fam2').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');M2.fam=b.dataset.fam;
+  document.querySelectorAll('.wbonly2').forEach(x=>x.style.display=M2.fam==='wb'?'block':'none');
+  document.getElementById('thm2').innerHTML=M2.fam==='wb'
+    ? 'Var(θ̂) ≥ [I(θ₀)]⁻¹, &nbsp;I = ∫₀^τ* ℓ̇ ℓ̇ᵀ dF⁽ʲ⁾ &nbsp;(truncated)'
+    : '√n(â₁−a₁) → N(0, a₁λ/β);  Var(â₁) ≈ a₁λ / (nβ)';
+  run2();});
+function varAtBeta(beta){
+  const a1=readNum('a12'),a2=readNum('a22');
+  if(M2.fam==='exp')return operVar(a1,a2,beta)[0];
+  const g1=readNum('g12'),g2=readNum('g22');
+  return weibOperInfo(a1,g1,a2,g2,beta)[0].Vinv[0]; // Var(a1)
+}
+function run2(){
+  const beta=readNum('b2');
+  const V=varAtBeta(beta), Vf=varAtBeta(0.999);
+  statBlock(document.getElementById('s2'),[
+    {v:V.toFixed(3),k:'limiting Var √n(â₁) at β='+beta.toFixed(2),cls:'warn'},
+    {v:Vf.toFixed(3),k:'no censoring (β→1)',cls:''},
+    {v:'×'+(V/Vf).toFixed(2),k:'how many times larger',cls:'good'},
+  ]);
+  const svg=document.getElementById('viz2');clearSvg(svg);const W=640,H=260,pad=40;
+  axes(svg,W,H,pad);
+  const betas=[];for(let b=0.2;b<=1.001;b+=0.03)betas.push(Math.min(b,0.999));
+  const vals=betas.map(b=>varAtBeta(b));const vmax=Math.max(...vals)*1.05;
+  const X=b=>pad+((b-0.2)/0.8)*(W-2*pad);const Y=v=>H-pad-(v/vmax)*(H-2*pad);
+  let d='';betas.forEach((b,i)=>{d+=(i?'L':'M')+X(b).toFixed(1)+' '+Y(vals[i]).toFixed(1)+' ';});
+  svg.appendChild(svgEl('path',{d,stroke:clr('--amber'),'stroke-width':2.4,fill:'none'}));
+  // classical reference (beta->1 value) as horizontal dashed line
+  const yCl=Y(Vf);
+  svg.appendChild(svgEl('line',{x1:pad,y1:yCl,x2:W-pad,y2:yCl,stroke:clr('--muted'),
+    'stroke-dasharray':'5 4','stroke-width':1.2}));
+  txt(svg,pad+6,yCl-6,'classical (β=1)',clr('--muted'),10,'start');
+  svg.appendChild(svgEl('circle',{cx:X(beta),cy:Y(V),r:5,fill:clr('--teal-2')}));
+  svg.appendChild(svgEl('line',{x1:X(beta),y1:Y(V),x2:X(beta),y2:H-pad,stroke:clr('--teal'),'stroke-dasharray':'3 3'}));
+  txt(svg,X(0.2),H-pad+16,'β=0.2',clr('--muted'),10,'start');
+  txt(svg,X(1),H-pad+16,'β=1',clr('--muted'),10,'end');
+  txt(svg,X(beta),Y(V)-10,'operational',clr('--amber-2'),10,'middle');
+  txt(svg,pad-8,pad,'Var',clr('--muted'),10,'end');
+  document.getElementById('call2').innerHTML=M2.fam==='wb'
+    ? 'For <b>Weibull</b> operational information: the truncated integral I=∫₀^τ* ℓ̇ℓ̇ᵀdF⁽ʲ⁾, and it <b>does not reduce</b> to βI_F (unlike the exponential case). The tool computes it numerically; this subtle point is exactly what the dissertation emphasises.'
+    : 'For β&lt;1 the variance grows as <b>1/β</b>. Reporting with the classical I_F would understate the limiting variance by <b>'+(1/beta).toFixed(2)+'×</b>. The operational bound βI_F is honest.';
+}
+['a12','a22','b2','g12','g22'].forEach(id=>document.getElementById(id).addEventListener('input',run2));
+bindRange('a12','a12v',v=>(+v).toFixed(1));bindRange('a22','a22v',v=>(+v).toFixed(1));bindRange('b2','b2v',v=>(+v).toFixed(2));
+bindRange('g12','g12v',v=>(+v).toFixed(1));bindRange('g22','g22v',v=>(+v).toFixed(1));
+
+/* ============ MODULE 3 ============ */
+const M3={fam:'exp'};
+document.getElementById('fam3').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');M3.fam=b.dataset.fam;});
+function run3(){
+  const n=Math.round(readNum('n3')),beta=readNum('b3'),stf=readNum('st3');
+  const a1=1.0,a2=0.5,g=1.3;
+  let errs,est,truth,label;
+  if(M3.fam==='exp'){
+    const sim=simExp(n,a1,a2,beta,7);const fit=mleExp(sim);
+    truth=fit.est;
+    // Honest Newton on the score f_j(a)=D_j/a - TAR, f'_j=-D_j/a^2.
+    // Newton step: a <- a - f/f' = a + a^2 (D/a - TAR)/D = a(2 - a*TAR/D).
+    // Fixed point is a*=D/TAR=truth. Start FAR away (stf multiplies truth).
+    let a=[truth[0]*stf,truth[1]*stf];errs=[];
+    for(let it=0;it<20;it++){
+      const a0=a[0]*(2-a[0]*fit.TAR/fit.D1);
+      const a1n=a[1]*(2-a[1]*fit.TAR/fit.D2);
+      a=[a0,a1n];
+      const er=Math.hypot(a[0]-truth[0],a[1]-truth[1]);errs.push(er);
+      if(!isFinite(er)||er<1e-15)break;}
+    est=a;label='Exponential (2 parameters)';
+  } else {
+    const g1d=1.3,g2d=0.9;const sim=simWeib(n,a1,a2,g1d,g2d,beta,7);
+    // first get the true MLE from a good start
+    const ref=newtonWeib(sim,[a1*0.7,g1d*0.9,a2*0.7,g2d*0.9]);truth=ref.est;
+    // now start far and record convergence to truth
+    const th0=[truth[0]*stf,truth[1]*stf,truth[2]*stf,truth[3]*stf];
+    const nw=newtonWeib(sim,th0);est=nw.est;
+    errs=nw.errs.map((_,k)=>{ // recompute error to truth per iterate
+      return null;});
+    // re-run capturing iterates:
+    errs=[];let th=th0.slice();
+    for(let it=0;it<20;it++){const nwStep=newtonWeib({Z:sim.Z,cause:sim.cause,obs:sim.obs},th,1);
+      th=nwStep.est;errs.push(Math.hypot(th[0]-truth[0],th[1]-truth[1],th[2]-truth[2],th[3]-truth[3]));
+      if(errs[errs.length-1]<1e-15)break;}
+    label='Weibull (4 parameters)';
+  }
+  M3._errs=errs;M3._label=label;M3._shown=errs.length; // full run shows all
+  showConv3(errs.length);
+}
+function showConv3(k){
+  const errs=M3._errs;if(!errs)return;const shown=errs.slice(0,k);
+  drawConv(shown,errs.length);
+  statBlock(document.getElementById('s3'),[
+    {v:shown.length+(k<errs.length?'/'+errs.length:''),k:'iterations'+(k<errs.length?' (step by step)':' to convergence'),cls:'good'},
+    {v:shown[shown.length-1].toExponential(1),k:'current error',cls:'good'},
+    {v:M3._label.split(' ')[0],k:'model',cls:''},
+  ]);
+  const tb=document.getElementById('tab3');
+  tb.innerHTML='<tr><th>k</th><th>‖error‖</th><th>correct digits</th></tr>'+
+    shown.slice(0,10).map((e,i)=>`<tr><td>${i+1}</td><td>${e.toExponential(2)}</td><td>${Math.max(0,Math.round(-Math.log10(e))||0)}</td></tr>`).join('');
+}
+function drawConv(errs,total){
+  const svg=document.getElementById('viz3');clearSvg(svg);const W=640,H=250,pad=40;
+  axes(svg,W,H,pad);
+  const K=total||errs.length;const X=k=>pad+(k/(Math.max(K-1,1)))*(W-2*pad);
+  const lo=-16,hi=1;const Y=e=>{const l=Math.log10(Math.max(e,1e-16));return pad+((hi-l)/(hi-lo))*(H-2*pad);};
+  for(let p=0;p>=-16;p-=4){const y=pad+((hi-p)/(hi-lo))*(H-2*pad);
+    svg.appendChild(svgEl('line',{x1:pad,y1:y,x2:W-pad,y2:y,stroke:clr('--line'),opacity:.5}));
+    txt(svg,pad-6,y+3,'10^'+p,clr('--muted'),9,'end');}
+  let d='';errs.forEach((e,k)=>{d+=(k?'L':'M')+X(k).toFixed(1)+' '+Y(e).toFixed(1)+' ';});
+  svg.appendChild(svgEl('path',{d,stroke:clr('--teal'),'stroke-width':1.8,fill:'none'}));
+  errs.forEach((e,k)=>svg.appendChild(svgEl('circle',{cx:X(k),cy:Y(e),r:3.5,fill:clr('--amber')})));
+  txt(svg,W-pad,H-pad+16,'iteration k',clr('--muted'),10,'end');
+}
+document.getElementById('run3').addEventListener('click',()=>{run3();M3._stepping=false;});
+document.getElementById('step3').addEventListener('click',()=>{
+  if(!M3._errs||!M3._stepping){run3();M3._stepping=true;M3._shown=1;showConv3(1);return;}
+  if(M3._shown>=M3._errs.length){M3._shown=1;} // wrap around to restart
+  else M3._shown=M3._shown+1;
+  showConv3(M3._shown);});
+['n3','b3','st3'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{}));
+bindRange('n3','n3v');bindRange('b3','b3v',v=>(+v).toFixed(2));bindRange('st3','st3v',v=>(+v).toFixed(2)+'×');
+
+/* ============ MODULE 4 ============ */
+function run4(){
+  const delta=readNum('d4'),beta=readNum('b4'),a1=readNum('a14'),a2=readNum('a24');
+  const fam=(window.M4&&M4.fam)||'exp';
+  let Vmax, Etau;
+  if(fam==='wb'){
+    const g1=readNum('g14'),g2=readNum('g24');
+    const oi=weibOperInfo(a1,g1,a2,g2,beta);
+    // Vinv[0] = Var(a_j) per unit sample (β already inside via τ*); take max over causes
+    const V1=oi[0].Vinv[0], V2=oi[1].Vinv[0];
+    Vmax=Math.max(V1,V2);
+    // expected duration = τ* (horizon giving fraction β), from weibOperInfo
+    Etau=oi[0].tstar;
+  } else {
+    const V=operVar(a1,a2,beta);Vmax=Math.max(V[0],V[1]);
+    Etau=-Math.log(1-Math.min(beta,0.999))/(a1+a2);
+  }
+  const nreq=Math.ceil(Vmax/(delta*delta));
+  statBlock(document.getElementById('s4'),[
+    {v:nreq.toLocaleString('ru'),k:'required sample size n',cls:'good'},
+    {v:'δ='+delta.toFixed(3),k:'target std error',cls:''},
+    {v:Math.round(nreq*beta).toLocaleString('ru'),k:'expected failures (≈nβ)',cls:''},
+    {v:Etau.toFixed(3),k:'horizon τ*',cls:''},
+  ]);
+  // curve n vs delta
+  const svg=document.getElementById('viz4');clearSvg(svg);const W=640,H=250,pad=48;
+  axes(svg,W,H,pad);
+  const ds=[];for(let d=0.01;d<=0.2001;d+=0.005)ds.push(d);
+  const ns=ds.map(d=>Vmax/(d*d));const nmax=Math.max(...ns);
+  const X=d=>pad+((d-0.01)/0.19)*(W-2*pad);const Y=nn=>H-pad-(nn/nmax)*(H-2*pad);
+  let dd='';ds.forEach((d,i)=>{dd+=(i?'L':'M')+X(d).toFixed(1)+' '+Y(ns[i]).toFixed(1)+' ';});
+  svg.appendChild(svgEl('path',{d:dd,stroke:clr('--amber'),'stroke-width':2.4,fill:'none'}));
+  svg.appendChild(svgEl('circle',{cx:X(delta),cy:Y(nreq),r:5,fill:clr('--teal-2')}));
+  svg.appendChild(svgEl('line',{x1:X(delta),y1:Y(nreq),x2:X(delta),y2:H-pad,stroke:clr('--teal'),'stroke-dasharray':'3 3'}));
+  txt(svg,X(delta),Y(nreq)-10,'n='+nreq,clr('--teal-2'),11,'middle');
+  txt(svg,X(0.01),H-pad+16,'δ=0.01',clr('--muted'),10,'start');
+  txt(svg,X(0.2),H-pad+16,'δ=0.2',clr('--muted'),10,'end');
+  document.getElementById('call4').innerHTML='To halve the precision (δ→δ/2), the sample size must be increased <b>by 4×</b> (n ~ 1/δ²). '+
+    'At β='+beta.toFixed(2)+' censoring additionally increases n by '+(1/beta).toFixed(2)+'× relative to full observation.';
+}
+['d4','b4','a14','a24','g14','g24'].forEach(id=>document.getElementById(id).addEventListener('input',run4));
+bindRange('d4','d4v',v=>(+v).toFixed(3));bindRange('b4','b4v',v=>(+v).toFixed(2));
+bindRange('g14','g14v',v=>(+v).toFixed(1));bindRange('g24','g24v',v=>(+v).toFixed(1));
+window.M4=window.M4||{fam:'exp'};
+document.querySelectorAll('#fam4 button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#fam4 button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  M4.fam=b.dataset.fam;document.querySelectorAll('.wbonly4').forEach(x=>x.style.display=M4.fam==='wb'?'block':'none');run4();}));
+bindRange('a14','a14v',v=>(+v).toFixed(1));bindRange('a24','a24v',v=>(+v).toFixed(1));
+
+/* ============ MODULE 5 ============ */
+function claytonBias(a1,a2,beta,tau,n,reps,seed){
+  const tc=tau<1?2*tau/(1-tau):20;const rng=mulberry32(seed);const lam=a1+a2;const T0=-Math.log(1-beta)/lam;
+  const bs=[];
+  for(let r=0;r<reps;r++){let D1=0,D2=0,TAR=0;
+    for(let i=0;i<n;i++){const u1=rng(),w=rng();let u2;
+      if(tc<1e-8)u2=rng();else u2=Math.pow(Math.pow(u1,-tc)*(Math.pow(w,-tc/(1+tc))-1)+1,-1/tc);
+      const t1=-Math.log(1-u1)/a1,t2=-Math.log(1-u2)/a2;
+      const x=Math.min(t1,t2),c=t1<t2?1:2;const z=Math.min(x,T0);TAR+=z;
+      if(x<=T0){if(c===1)D1++;else D2++;}}
+    if(D1>0&&D2>0)bs.push((D1/TAR)-a1);}
+  const mean=bs.reduce((a,b)=>a+b,0)/bs.length;
+  const sd=Math.sqrt(bs.reduce((a,b)=>a+(b-mean)**2,0)/bs.length);
+  return {bias:mean,sd};
+}
+function run5(){
+  const tau=readNum('t5'),beta=readNum('b5'),n=Math.round(readNum('n5'));
+  const a1=readNum('a15'),a2=readNum('a25');
+  const REPS=400;
+  const {bias,sd}=claytonBias(a1,a2,beta,tau,n,REPS,11);
+  const seBias=sd/Math.sqrt(REPS);  // Monte Carlo standard error of the bias estimate
+  const ratio=sd>0?Math.abs(bias)/sd:0;
+  statBlock(document.getElementById('s5'),[
+    {v:(bias>=0?'+':'')+bias.toFixed(4),k:'discrepancy θ̂₁ at τ='+tau.toFixed(3),cls:Math.abs(bias)<0.03?'good':'warn'},
+    {v:'['+(bias-1.96*seBias).toFixed(4)+'; '+(bias+1.96*seBias).toFixed(4)+']',k:'95% CI of discrepancy (R='+REPS+')',cls:''},
+    {v:ratio.toFixed(2),k:'discrepancy / spread per sample',cls:ratio<1?'good':'warn'},
+  ]);
+  const svg=document.getElementById('viz5');clearSvg(svg);const W=640,H=250,pad=46;
+  axes(svg,W,H,pad);
+  const taus=[0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5];
+  const res=taus.map(t=>claytonBias(a1,a2,beta,t,Math.min(n,2000),40,11));
+  const biases=res.map(r=>r.bias),sds=res.map(r=>r.sd);
+  const allLo=biases.map((b,i)=>b-sds[i]),allHi=biases.map((b,i)=>b+sds[i]);
+  const bmin=Math.min(...allLo,-0.001),bmax=Math.max(...allHi,0.001);
+  const X=t=>pad+(t/0.5)*(W-2*pad);const Y=b=>pad+((bmax-b)/(bmax-bmin))*(H-2*pad);
+  // noise band (±sd)
+  let bandU='M'+taus.map((t,i)=>X(t).toFixed(1)+' '+Y(allHi[i]).toFixed(1)).join(' L');
+  bandU+=' L'+taus.map((t,i)=>X(t).toFixed(1)+' '+Y(allLo[i]).toFixed(1)).reverse().join(' L')+' Z';
+  svg.appendChild(svgEl('path',{d:bandU,fill:'rgba(75,183,168,.12)',stroke:'none'}));
+  svg.appendChild(svgEl('line',{x1:pad,y1:Y(0),x2:W-pad,y2:Y(0),stroke:clr('--line')}));
+  let d='';taus.forEach((t,i)=>{d+=(i?'L':'M')+X(t).toFixed(1)+' '+Y(biases[i]).toFixed(1)+' ';});
+  svg.appendChild(svgEl('path',{d,stroke:clr('--amber'),'stroke-width':2.2,fill:'none'}));
+  // local linear slope at tau=0: discrepancy ~ slope * tau (fit near 0)
+  const slope=biases[2]/taus[2]; // slope from tau=0.1 point
+  const t0=0,t1=0.3; // draw linear only in the valid small-tau region
+  svg.appendChild(svgEl('line',{x1:X(t0),y1:Y(0),x2:X(t1),y2:Y(slope*t1),
+    stroke:clr('--teal-2'),'stroke-width':1.4,'stroke-dasharray':'5 4'}));
+  txt(svg,X(t1),Y(slope*t1)+14,'linear (slope at τ=0)',clr('--teal-2'),9,'middle');
+  svg.appendChild(svgEl('circle',{cx:X(tau),cy:Y(bias),r:5,fill:clr('--teal-2')}));
+  txt(svg,X(0),H-pad+16,'τ=0',clr('--muted'),10,'start');
+  txt(svg,X(0.5),H-pad+16,'τ=0.5',clr('--muted'),10,'end');
+  txt(svg,W-pad,Y(0)-5,'zero',clr('--muted'),9,'end');
+  document.getElementById('call5').innerHTML=tau===0
+    ? 'At <b>independence</b> (τ=0) there is no discrepancy. The teal band shows the random spread of the estimate over one sample (±1σ).'
+    : ratio<1
+      ? 'Discrepancy <b>smaller than random noise</b> (ratio '+ratio.toFixed(2)+'&lt;1): under weak dependence it is practically <b>negligible</b>: this is exactly the local robustness from the work.'
+      : 'Discrepancy <b>exceeds the noise</b> (ratio '+ratio.toFixed(2)+'&gt;1): the independence-fit estimate departs systematically from the marginal rate. This departure is approximately linear in τ over the simulated range — a misspecification effect (fitting a constant-hazard model to copula-dependent data), not a proven bias of the cause-specific MLE.';
+  drawCopula(tau);
+}
+function drawCopula(tau){
+  const svg=document.getElementById('viz5b');if(!svg)return;clearSvg(svg);
+  const W=640,H=260,pad=36;
+  // frame
+  svg.appendChild(svgEl('rect',{x:pad,y:pad,width:W-2*pad,height:H-2*pad,
+    fill:'none',stroke:clr('--line')}));
+  txt(svg,pad-6,H-pad,'0',clr('--muted'),9,'end');
+  txt(svg,pad-6,pad+8,'1',clr('--muted'),9,'end');
+  txt(svg,pad,H-pad+15,'U₁',clr('--muted'),10,'start');
+  txt(svg,W-pad,H-pad+15,'1',clr('--muted'),9,'end');
+  txt(svg,pad-20,pad+40,'U₂',clr('--muted'),10,'middle');
+  // sample Clayton copula (deterministic)
+  const tc=tau<1?2*tau/(1-tau):20;const rng=mulberry32(2024);const N=420;
+  const X=u=>pad+u*(W-2*pad);const Y=u=>H-pad-u*(H-2*pad);
+  for(let i=0;i<N;i++){const u1=rng(),w=rng();
+    let u2;if(tc<1e-8)u2=rng();else u2=Math.pow(Math.pow(u1,-tc)*(Math.pow(w,-tc/(1+tc))-1)+1,-1/tc);
+    svg.appendChild(svgEl('circle',{cx:X(u1),cy:Y(u2),r:2,
+      fill:tau===0?clr('--muted'):clr('--teal'),opacity:0.55}));}
+  // diagonal reference
+  svg.appendChild(svgEl('line',{x1:X(0),y1:Y(0),x2:X(1),y2:Y(1),
+    stroke:clr('--line'),'stroke-dasharray':'4 4'}));
+  // label
+  txt(svg,W/2,pad-8,tau===0?'independence: the points fill the square uniformly'
+    :'τ='+tau.toFixed(3)+': clustering along the diagonal (dependence)',
+    tau===0?clr('--muted'):clr('--teal-2'),10,'middle');
+}
+document.getElementById('run5').addEventListener('click',()=>{
+  const btn=document.getElementById('run5');const orig=btn.innerHTML;
+  btn.innerHTML='<span class="spin"></span>Computing…';btn.disabled=true;
+  setTimeout(()=>{run5();btn.innerHTML=orig;btn.disabled=false;},30);
+});
+document.getElementById('t5').addEventListener('input',()=>drawCopula(readNum('t5')));
+bindRange('a15','a15v',v=>(+v).toFixed(1));bindRange('a25','a25v',v=>(+v).toFixed(1));
+['b5','n5'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{}));
+bindRange('t5','t5v',v=>(+v).toFixed(3));bindRange('b5','b5v',v=>(+v).toFixed(2));bindRange('n5','n5v');
+
+/* ============ nav ============ */
+document.querySelector('.modnav .wrap').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.getElementById(b.dataset.go).scrollIntoView({behavior:'smooth'});});
+const secs=[...document.querySelectorAll('.mod')];const navs=[...document.querySelectorAll('.modnav button')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){
+  navs.forEach(n=>n.classList.toggle('on',n.dataset.go===e.target.id));}});},{rootMargin:'-40% 0px -55% 0px'});
+secs.forEach(s=>io.observe(s));
+
+/* ============ presets ============ */
+const PRESETS={
+  clinical:{ // clinical trial: two competing causes, moderate censoring
+    desc:'Clinical trial: two competing causes of outcome (e.g., relapse vs complication), moderate censoring at the end of follow-up.',
+    m1:{fam:'exp',b:0.7,n:500,a1:0.8,a2:0.6}, go:'m1'},
+  reliability:{ // equipment reliability: Weibull, one dominant cause
+    desc:'Equipment reliability: Weibull intensities, one failure cause dominates (a₁≫a₂). The task is to identify the dominant mechanism.',
+    m1:{fam:'wb',b:0.8,n:2000,a1:1.4,a2:0.4,g1a:1.6,g1b:1.2}, go:'m1'},
+  planning:{ // planning: go to module 4
+    desc:'Experiment planning: how many units are needed to estimate the intensities with precision δ=0.03 at 75% failures.',
+    m4:{d:0.03,b:0.75,a1:1.0,a2:0.5}, go:'m4'},
+  heavy:{ // heavy censoring corner
+    desc:'Heavy censoring: only 30% of failures are observed. Demonstrates the information limit: estimates are unstable, intervals are wide.',
+    m1:{fam:'exp',b:0.3,n:300,a1:1.0,a2:0.5}, go:'m1'}
+};
+function setRange(id,val){const el=document.getElementById(id);if(!el)return;el.value=val;
+  el.dispatchEvent(new Event('input'));}
+function applyPreset(key){
+  const P=PRESETS[key];if(!P)return;
+  document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('on',b.dataset.p===key));
+  if(P.m1){M1.userData=null;const m=P.m1;
+    document.querySelectorAll('#fam1 button').forEach(x=>x.classList.toggle('on',x.dataset.fam===m.fam));
+    M1.fam=m.fam;document.querySelectorAll('#c1 .wbonly').forEach(x=>x.style.display=m.fam==='wb'?'block':'none');
+    setRange('b1',m.b);setRange('n1',m.n);setRange('a11',m.a1);setRange('a21',m.a2);if(m.g1a)setRange('g1a',m.g1a);if(m.g1b)setRange('g1b',m.g1b);
+    run1();}
+  if(P.m4){const m=P.m4;setRange('d4',m.d);setRange('b4',m.b);setRange('a14',m.a1);setRange('a24',m.a2);run4();}
+  // show scenario description banner
+  let bn=document.getElementById('scenBanner');
+  if(!bn){bn=document.createElement('div');bn.id='scenBanner';
+    bn.style.cssText='max-width:1200px;margin:0 auto;padding:14px 24px;font-size:14px;color:var(--parch);'+
+      'background:var(--panel-2);border-left:3px solid var(--amber);font-family:var(--sans)';
+    document.querySelector('.modnav').after(bn);}
+  bn.innerHTML='<b style="color:var(--amber-2)">Scenario:</b> '+P.desc;
+  document.getElementById(P.go).scrollIntoView({behavior:'smooth'});
+}
+document.getElementById('presets').addEventListener('click',e=>{const b=e.target.closest('.preset');
+  if(b&&b.dataset.p)applyPreset(b.dataset.p);});
+/* reset all modules to defaults */
+document.getElementById('resetAll').addEventListener('click',()=>{
+  const defs={b1:0.75,n1:1000,a11:1.0,a21:0.5,g1a:1.3,g1b:0.9, a12:1.0,a22:0.5,b2:0.75,g12:1.3,g22:0.9,
+    n3:2000,b3:0.8,st3:1.3, d4:0.05,b4:0.75,a14:1.0,a24:0.5, t5:0.10,b5:0.75,n5:3000,
+    n6:200,b6:0.70,e6:0.15,df6:4};
+  for(const id in defs)setRange(id,defs[id]);
+  M1.userData=null;M1.seed=1;M1.fam='exp';
+  document.querySelectorAll('#fam1 button').forEach(x=>x.classList.toggle('on',x.dataset.fam==='exp'));
+  document.querySelectorAll('#c1 .wbonly').forEach(x=>x.style.display='none');
+  document.getElementById('csvinfo1').innerHTML='';
+  ['cmpBox','bootBox','scenBanner'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
+  document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));
+  run1();run2();run4();run5();run6();
+});
+
+/* ============ MODULE 6: WALD POWER ============ */
+const M6={view:'power'};
+function opBlocks6(beta){var oi=weibOperInfo(1.0,1.3,0.5,0.9,beta);return [oi[0].I,oi[1].I];}
+function eig2(m){var a=m[0][0],b=m[0][1],c=m[1][1],t=(a+c)/2,d=Math.sqrt(((a-c)/2)*((a-c)/2)+b*b);return [t-d,t+d];}
+function infoQ6(beta,q){var B=opBlocks6(beta),B1=B[0],B2=B[1];
+  var full=[[B1[0][0],B1[0][1],0,0],[B1[1][0],B1[1][1],0,0],[0,0,B2[0][0],B2[0][1]],[0,0,B2[1][0],B2[1][1]]];
+  var I=[];for(var i=0;i<q;i++)I.push(full[i].slice(0,q));
+  var eigs=q===1?[B1[0][0]]:q===2?eig2(B1):q===3?eig2(B1).concat([B2[0][0]]):eig2(B1).concat(eig2(B2));
+  return {I:I,eigs:eigs};}
+function lambda6(n,beta,E,q){var r=infoQ6(beta,q),I=r.I,eigs=r.eigs,u=1/Math.sqrt(q),quad=0;
+  for(var i=0;i<q;i++)for(var j=0;j<q;j++)quad+=u*I[i][j]*u;
+  var emin=Math.min.apply(null,eigs),emax=Math.max.apply(null,eigs);
+  return {lam:n*E*E*quad,quad:quad,lmin:n*E*E*emin,lmax:n*E*E*emax};}
+function run6(){
+  const n=Math.round(readNum('n6')),beta=readNum('b6'),E=readNum('e6'),df=Math.round(readNum('df6'));
+  const alpha=0.05;
+  const L=lambda6(n,beta,E,df);const lam=L.lam;const quad=L.quad;
+  const crit=chi2ppf(1-alpha,df);
+  const power=1-ncx2cdf(crit,df,lam);
+  const pcls=power>=0.8?'good':(power>=0.5?'warn':'');
+  statBlock(document.getElementById('s6'),[
+    {v:lam.toFixed(2),k:'exact λ = n·hᵀℐ(θ₀)h',cls:''},
+    {v:crit.toFixed(2),k:'critical value χ²('+df+', 95%)',cls:''},
+    {v:(power*100).toFixed(1)+'%',k:'test power',cls:pcls},
+  ]);
+  // note: exact non-centrality λ = n·hᵀI(θ0)h (Module 6)
+  let warn6=document.getElementById('warn6');
+  if(!warn6){warn6=document.createElement('div');warn6.id='warn6';
+    warn6.style.cssText='font-family:var(--mono);font-size:11.5px;color:var(--amber);margin:-6px 0 14px;line-height:1.5';
+    document.getElementById('s6').after(warn6);}
+  warn6.innerHTML = df>1
+    ? 'λ computed <b>exactly</b> as λ = n·hᵀℐ(θ₀)h, where ℐ is the operational information of the two-cause Weibull model (default θ₀, β='+beta.toFixed(2)+'). Since ℐ is anisotropic, for a fixed effect size |h|=E the non-centrality depends on the <i>direction</i> of h: over all directions λ∈['+L.lmin.toFixed(2)+', '+L.lmax.toFixed(2)+'] (eigenvalue range of ℐ); the value shown uses the balanced direction.'
+    : 'λ computed exactly as λ = n·E²·ℐ₁₁(θ₀) — the scalar (q=1) non-centrality, with ℐ₁₁ the operational information of the first parameter.';
+  if(M6.view==='equiv'){
+    drawThreeTests(df,lam,crit,n);
+    drawGapCurve(df,lam,crit,beta,E,n);
+    document.getElementById('call6').innerHTML=
+      `<b>Equivalence theorem (4.5):</b> the Wald, likelihood-ratio and Rao (score) statistics have <b>common limit</b> χ²_q(λ). At finite n they differ by an amount of order <b>O(1/√n)</b>: the lower plot shows how the discrepancy 'collapses' as n grows. At n=${n} discrepancy ≈ ${(1.067/Math.sqrt(n)).toFixed(3)}.`;
+    return;
+  }
+  drawPowerDist(df,lam,crit,power);
+  drawPowerCurve(quad,E,df,crit,n);
+  // required n for 80% power: solve n*beta*E^2 -> power=0.8
+  let nlo=1,nhi=1e6;for(let i=0;i<60;i++){const nm=(nlo+nhi)/2;
+    (1-ncx2cdf(crit,df,nm*E*E*quad)<0.8)?nlo=nm:nhi=nm;}
+  const nreq=Math.ceil((nlo+nhi)/2);
+  const el=document.getElementById('call6');
+  if(power>=0.8)el.innerHTML=`Power <b>${(power*100).toFixed(0)}%</b>: the test confidently distinguishes H₀ and H₁ at effect E=${E}. The H₁ distribution is clearly shifted to the right of the critical boundary.`;
+  else el.innerHTML=`Power only <b>${(power*100).toFixed(0)}%</b>: the H₁ distribution 'creeps' onto H₀. For 80% power at β=${beta.toFixed(2)} needed <b>n ≈ ${nreq}</b>. `+
+    (beta<0.5?`Heavy censoring (β=${beta.toFixed(2)}) 'eats up' the non-centrality; compare with β=1: there it would have sufficed to take n ≈ ${Math.ceil(nreq*beta)}.`:'');
+}
+/* three test statistics: shared limiting distribution + shrinking finite-n spread */
+function drawThreeTests(df,lam,crit,n){
+  const svg=document.getElementById('viz6');clearSvg(svg);const W=640,H=300,pad=44;
+  axes(svg,W,H,pad);
+  const gap=1.067/Math.sqrt(n); // finite-n divergence O(1/sqrt(n))
+  const xmax=Math.max(30,lam+3*Math.sqrt(2*(df+2*lam))+5);
+  const X=x=>pad+(x/xmax)*(W-2*pad);
+  const N=260;let ymax=0;const base=[];
+  for(let i=0;i<=N;i++){const x=xmax*i/N;const p=ncx2pdf(x,df,lam);base.push([x,p]);ymax=Math.max(ymax,p);}
+  const Y=p=>H-pad-(p/ymax)*(H-2*pad);
+  // three shifted versions: Wald (shifted right), LR (center=limit), Score (shifted left)
+  // shift in noncentrality by +-gap*lam-scale to visualize divergence
+  const shift=gap*Math.max(lam,2)*0.5;
+  const mk=(lamShift,color,wd)=>{let d='';for(let i=0;i<=N;i++){const x=xmax*i/N;
+    const p=ncx2pdf(x,df,Math.max(0.001,lam+lamShift));d+=(i?'L':'M')+X(x).toFixed(1)+' '+Y(p).toFixed(1)+' ';}
+    svg.appendChild(svgEl('path',{d,stroke:color,'stroke-width':wd,fill:'none'}));};
+  mk(+shift,clr('--amber'),1.8);   // Wald
+  mk(0,clr('--teal-2'),2.4);       // LR (≈ limit)
+  mk(-shift,clr('--rose'),1.8);    // Score
+  // critical line
+  svg.appendChild(svgEl('line',{x1:X(crit),y1:pad,x2:X(crit),y2:H-pad,stroke:clr('--muted'),'stroke-dasharray':'5 4','stroke-width':1.2}));
+  txt(svg,X(crit),pad-4,'critical '+crit.toFixed(1),clr('--muted'),10,'middle');
+  txt(svg,pad+6,pad+4,'▬ Wald (Wₙ)',clr('--amber-2'),10,'start');
+  txt(svg,pad+6,pad+18,'▬ Likelihood ratio (LRₙ)',clr('--teal-2'),10,'start');
+  txt(svg,pad+6,pad+32,'▬ Rao / score (Rₙ)',clr('--rose'),10,'start');
+  txt(svg,W-pad,H-pad+16,'statistic',clr('--muted'),10,'end');
+  txt(svg,W/2,pad-4,n<150?'small n: the tests differ noticeably':'large n: the tests have nearly merged',
+    n<150?clr('--amber-2'):clr('--teal-2'),10,'middle');
+}
+/* divergence between the three statistics vs n (shows O(1/sqrt(n)) -> 0) */
+function drawGapCurve(df,lam,crit,beta,E,ncur){
+  const svg=document.getElementById('viz6b');clearSvg(svg);const W=640,H=240,pad=48;
+  axes(svg,W,H,pad);
+  const nmax=2000;const X=n=>pad+(n/nmax)*(W-2*pad);
+  const gmax=1.067/Math.sqrt(30)*1.05;const Y=g=>H-pad-(g/gmax)*(H-2*pad);
+  // gap ~ C/sqrt(n)
+  let d='';for(let n=20;n<=nmax;n+=15){const g=1.067/Math.sqrt(n);
+    d+=(d===''?'M':'L')+X(n).toFixed(1)+' '+Y(g).toFixed(1)+' ';}
+  svg.appendChild(svgEl('path',{d,stroke:clr('--amber'),'stroke-width':2.4,fill:'none'}));
+  // marker at current n
+  if(ncur<=nmax){const g=1.067/Math.sqrt(ncur);
+    svg.appendChild(svgEl('circle',{cx:X(ncur),cy:Y(g),r:5,fill:clr('--teal-2')}));
+    svg.appendChild(svgEl('line',{x1:X(ncur),y1:Y(g),x2:X(ncur),y2:H-pad,stroke:clr('--teal'),'stroke-dasharray':'3 3'}));
+    txt(svg,X(ncur),Y(g)-10,'n='+ncur,clr('--teal-2'),10,'middle');}
+  // zero asymptote
+  txt(svg,W-pad,Y(0)-5,'→ 0 (equivalence)',clr('--muted'),9,'end');
+  txt(svg,pad-8,pad+4,'discrep.',clr('--muted'),10,'end');
+  txt(svg,W-pad,H-pad+16,'sample size n',clr('--muted'),10,'end');
+  txt(svg,X(20),H-pad+16,'20',clr('--muted'),10,'start');
+}
+function drawPowerDist(df,lam,crit,power){
+  const svg=document.getElementById('viz6');clearSvg(svg);const W=640,H=300,pad=44;
+  axes(svg,W,H,pad);
+  const xmax=Math.max(30,lam+3*Math.sqrt(2*(df+2*lam))+5);
+  const X=x=>pad+(x/xmax)*(W-2*pad);
+  // sample pdfs
+  const N=260;const h0=[],h1=[];let ymax=0;
+  for(let i=0;i<=N;i++){const x=xmax*i/N;const p0=chi2pdf(x,df),p1=ncx2pdf(x,df,lam);
+    h0.push([x,p0]);h1.push([x,p1]);ymax=Math.max(ymax,p0,p1);}
+  const Y=p=>H-pad-(p/ymax)*(H-2*pad);
+  // power fill under H1 beyond crit
+  let fill='M'+X(crit)+' '+(H-pad);
+  h1.forEach(([x,p])=>{if(x>=crit)fill+=' L'+X(x).toFixed(1)+' '+Y(p).toFixed(1);});
+  fill+=' L'+X(xmax)+' '+(H-pad)+' Z';
+  svg.appendChild(svgEl('path',{d:fill,fill:'rgba(245,166,35,.25)',stroke:'none'}));
+  // curves
+  const pathOf=pts=>pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  svg.appendChild(svgEl('path',{d:pathOf(h0),stroke:clr('--teal'),'stroke-width':2.2,fill:'none'}));
+  svg.appendChild(svgEl('path',{d:pathOf(h1),stroke:clr('--amber'),'stroke-width':2.2,fill:'none'}));
+  // critical line
+  svg.appendChild(svgEl('line',{x1:X(crit),y1:pad,x2:X(crit),y2:H-pad,stroke:clr('--rose'),'stroke-dasharray':'5 4','stroke-width':1.4}));
+  txt(svg,X(crit),pad-4,'critical '+crit.toFixed(1),clr('--rose'),10,'middle');
+  txt(svg,pad+6,pad+4,'▬ H₀ central χ²',clr('--teal-2'),10,'start');
+  txt(svg,pad+6,pad+18,'▬ H₁ non-central χ² (λ='+lam.toFixed(1)+')',clr('--amber-2'),10,'start');
+  txt(svg,W-pad,H-pad+16,'statistic Wₙ',clr('--muted'),10,'end');
+  txt(svg,X(crit)+55,Y(ncx2pdf(crit+2,df,lam))-8,'power',clr('--amber-2'),10,'middle');
+}
+function drawPowerCurve(quad,E,df,crit,ncur){
+  const svg=document.getElementById('viz6b');clearSvg(svg);const W=640,H=240,pad=44;
+  axes(svg,W,H,pad);
+  const nmax=1500;const X=n=>pad+(n/nmax)*(W-2*pad);const Y=p=>H-pad-p*(H-2*pad);
+  // 0.8 reference line
+  svg.appendChild(svgEl('line',{x1:pad,y1:Y(0.8),x2:W-pad,y2:Y(0.8),stroke:clr('--line'),'stroke-dasharray':'4 3'}));
+  txt(svg,W-pad,Y(0.8)-5,'80%',clr('--muted'),9,'end');
+  // required n for 80% power: solve
+  let nlo=1,nhi=1e6;for(let i=0;i<60;i++){const nm=(nlo+nhi)/2;
+    (1-ncx2cdf(crit,df,nm*E*E*quad)<0.8)?nlo=nm:nhi=nm;}
+  const n80=Math.ceil((nlo+nhi)/2);
+  if(n80<=nmax){svg.appendChild(svgEl('line',{x1:X(n80),y1:pad,x2:X(n80),y2:H-pad,
+    stroke:clr('--rose'),'stroke-width':2}));
+    txt(svg,X(n80),pad-3,'n₈₀='+n80,clr('--rose'),11,'middle');}
+  // power curve vs n
+  let d='';for(let n=10;n<=nmax;n+=15){const lam=n*E*E*quad;const pw=1-ncx2cdf(crit,df,lam);
+    d+=(d===''?'M':'L')+X(n).toFixed(1)+' '+Y(pw).toFixed(1)+' ';}
+  svg.appendChild(svgEl('path',{d,stroke:clr('--amber'),'stroke-width':2.4,fill:'none'}));
+  // marker at current n
+  const lamCur=ncur*E*E*quad;const pwCur=1-ncx2cdf(crit,df,lamCur);
+  if(ncur<=nmax){svg.appendChild(svgEl('circle',{cx:X(ncur),cy:Y(pwCur),r:5,fill:clr('--teal-2')}));
+    svg.appendChild(svgEl('line',{x1:X(ncur),y1:Y(pwCur),x2:X(ncur),y2:H-pad,stroke:clr('--teal'),'stroke-dasharray':'3 3'}));
+    txt(svg,X(ncur),Y(pwCur)-10,'n='+ncur,clr('--teal-2'),10,'middle');}
+  txt(svg,pad-8,pad+4,'power',clr('--muted'),10,'end');
+  txt(svg,W-pad,H-pad+16,'sample size n',clr('--muted'),10,'end');
+  txt(svg,X(0),H-pad+16,'0',clr('--muted'),10,'start');
+}
+['n6','b6','e6','df6'].forEach(id=>document.getElementById(id).addEventListener('input',run6));
+document.getElementById('view6').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...e.currentTarget.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');M6.view=b.dataset.v;
+  const cap1=document.querySelector('#m6 .viz-cap'),cap2=document.querySelectorAll('#m6 .viz-cap')[1];
+  if(M6.view==='equiv'){
+    if(cap1)cap1.textContent='Three statistics (Wald, LR, Rao) with a common limiting χ²_q(λ); at finite n they differ slightly';
+    if(cap2)cap2.textContent='Discrepancy between the tests as a function of n: decreases ~ 1/√n → 0 (asymptotic equivalence)';
+  } else {
+    if(cap1)cap1.textContent='Distributions of the statistic Wₙ under H₀ (central χ²) and H₁ (non-central χ²); shading denotes power';
+    if(cap2)cap2.textContent='Power as a function of n at the current β and E; the n required for 80% power is marked';
+  }
+  run6();});
+bindRange('n6','n6v');bindRange('b6','b6v',v=>(+v).toFixed(2));bindRange('e6','e6v',v=>(+v).toFixed(2));bindRange('df6','df6v');
+
+/* theme toggle */
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  document.body.classList.toggle('light');
+  const light=document.body.classList.contains('light');
+  document.getElementById('themeToggle').textContent=light?'☾ dark theme':'☀ light theme';
+  // redraw all SVGs (they captured colors at render time)
+  run1();run2();run3();run4();run5();run6();
+});
+
+/* ============ init all ============ */
+/* attach PNG export buttons above each visualization */
+[['viz1','sample'],['viz2','information'],['viz3','newton'],['viz4','planner'],['viz5','dependence'],['viz6','power'],['viz6b','power_curve']].forEach(([id,name])=>{
+  const svg=document.getElementById(id);if(!svg)return;
+  const btn=document.createElement('button');btn.className='pngbtn';btn.textContent='⭳ PNG';
+  btn.onclick=()=>svgToPng(svg,'crm_'+name+'.png');
+  svg.parentNode.insertBefore(btn,svg);
+});
+run1();run2();run3();run4();run5();run6();
+</script>
+</body>
+</html>
