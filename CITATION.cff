@@ -15,8 +15,7 @@ authors:
     affiliation: "Lomonosov Moscow State University, Tashkent Branch"
 repository-code: "https://github.com/nsnargiza-gif/HybridCR"
 url: "https://github.com/nsnargiza-gif/HybridCR"
-# After publishing the Mendeley Data archive, add its DOI here (this is field C3):
-# doi: 10.17632/XXXXXXXX
+doi: 10.17632/p8m3f9kx57.1
 references:
   - type: article
     title: "A Bernstein–von Mises theorem for parametric competing risks under hybrid censoring"

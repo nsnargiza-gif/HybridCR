@@ -11,7 +11,7 @@ Version **v1.0.0** · License **MIT** · Languages HTML5 / CSS3 / vanilla JavaSc
 ## Quick start
 
 - **Run:** double-click `HybridCR.html`, or open it in a browser, or serve the folder as a static site. Nothing to install.
-- **Verified in:** Chromium 141 (the Chrome/Edge engine), on desktop and a mobile viewport, with no console errors. It uses only standard web APIs and is expected to run in current Firefox and Safari.
+- **Verified in:** Chromium 141 (the Chrome/Edge engine), on desktop and a mobile viewport, with no console errors. It uses only standard web APIs.
 
 ## Modules
 
@@ -33,6 +33,10 @@ Upload your own data with three columns:
 | 3 — status | event indicator | 1 = event, 0 = right-censored (optional; defaults to 1) |
 
 Separators comma / semicolon / tab are accepted; a header row is auto-detected. Non-positive times and malformed rows are dropped. An example file and a template are available from the tool ("Download example CSV").
+
+## Example data
+
+`example_melanoma.csv` is a real competing-risks dataset bundled for demonstration: the classical melanoma study of 205 Danish patients from Andersen, Borgan, Gill and Keiding, *Statistical Models Based on Counting Processes* (Springer, 1993), as distributed in R's `MASS` package (`MASS::Melanoma`). Deaths are recorded as melanoma-specific (cause 1) or from other causes (cause 2); patients still alive are right-censored (status 0). Load it in Module 1 to reproduce the cause-specific exponential fit and the cumulative-incidence and Cox–Snell diagnostics on genuine, observed causes.
 
 ## Assumptions and scope
 
@@ -62,7 +66,7 @@ Rscript compare_R.R           # optional, if R is installed
 
 ## How to cite
 
-If you use HybridCR, please cite the software (via its archived release — Mendeley Data DOI, to be minted on first release) together with the companion articles:
+If you use HybridCR, please cite the software (via its archived release — Mendeley Data DOI 10.17632/p8m3f9kx57.1) together with the companion articles:
 
 - N. S. Nurmukhamedova, G. S. Abdujalilova, M. Berdimuradov, et al. *A Bernstein–von Mises theorem for parametric competing risks under hybrid censoring.* **Mathematics** 14(18) (2026) 3277. https://doi.org/10.3390/math14183277
 - N. S. Nurmukhamedova. *Simulation dataset on power and size of Wald, likelihood-ratio, and score test statistics in parametric competing risks models under hybrid censoring.* **Data in Brief** 68 (2026) 113136. https://doi.org/10.1016/j.dib.2026.113136
