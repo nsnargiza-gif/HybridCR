@@ -2,6 +2,17 @@
 
 **A self-contained, browser-based tool for maximum-likelihood inference and study design in two-cause competing-risks models under hybrid Type-I censoring.**
 
+![HybridCR](banner.png)
+
+[![Try it live](https://img.shields.io/badge/%E2%96%B6_Try_it_live-in_your_browser-2ea44f?style=for-the-badge)](https://nsnargiza-gif.github.io/HybridCR/)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://img.shields.io/badge/DOI-10.17632%2Fp8m3f9kx57-blue.svg)](https://doi.org/10.17632/p8m3f9kx57.1)
+![Dependencies: none](https://img.shields.io/badge/dependencies-none-success.svg)
+![Single file](https://img.shields.io/badge/single--file-~110_kB-informational.svg)
+
+**▶ Live demo: https://nsnargiza-gif.github.io/HybridCR/** — runs entirely in your browser, nothing to install.
+
 HybridCR is a single HTML file (~110 kB) with no third-party libraries, no build step and no server. Open it in any modern browser — it runs offline, all computation is client-side, and no data leave your device. It is aimed at teaching, at pre-study design, and as an interactive companion to the methodological results in the references below.
 
 Version **v1.0.0** · License **MIT** · Languages HTML5 / CSS3 / vanilla JavaScript (ES6), inline SVG.
@@ -13,13 +24,19 @@ Version **v1.0.0** · License **MIT** · Languages HTML5 / CSS3 / vanilla JavaSc
 - **Run:** double-click `HybridCR.html`, or open it in a browser, or serve the folder as a static site. Nothing to install.
 - **Verified in:** Chromium 141 (the Chrome/Edge engine), on desktop and a mobile viewport, with no console errors. It uses only standard web APIs.
 
+## Screenshot
+
+![HybridCR — Module 1](screenshot.png)
+
+*Module 1 — simulation, maximum-likelihood estimation, cumulative incidence against the Aalen–Johansen estimator, and Cox–Snell diagnostics. The other five modules cover the operational information, Newton convergence, sample-size planning, risk dependence and Wald-test power.*
+
 ## Modules
 
 1. **Simulation & estimation** — draw a two-cause sample under the hybrid scheme τₙ = min(X₍ᵣ₎, T₀), fit cause-specific exponential/Weibull intensities by Newton–Raphson, with cumulative incidence (parametric vs Aalen–Johansen), Cox–Snell diagnostics, and bootstrap CIs.
 2. **Operational information & efficiency bound** — the operational Fisher information 𝓘ₒₚ vs the classical 𝓘_F; equals β·𝓘_F only for the exponential family, computed by quadrature for Weibull.
 3. **Newton's method** — quadratic convergence of the MLE, error shown per iteration.
 4. **Sample-size planner** — required n for a target standard error δ from the operational information.
-5. **Risk dependence** — bias of the independence-based estimator under a Clayton copula, vs Kendall's τ, with Monte-Carlo uncertainty.
+5. **Risk dependence** — discrepancy of the independence-based estimator under a Clayton copula, vs Kendall's τ, with Monte-Carlo uncertainty.
 6. **Wald-test power** — exact non-centrality λ = n·hᵀ𝓘(θ₀)h for the q-dimensional hypothesis, with the direction-dependence range.
 
 ## Data input (CSV)
