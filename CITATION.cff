@@ -10,12 +10,9 @@ authors:
     given-names: Nargiza S.
     affiliation: "National University of Uzbekistan named after Mirzo Ulugbek"
     email: n.nurmukhamedova@nuu.uz
-  - family-names: Abdushukurov
-    given-names: Abdurahim A.
-    affiliation: "Lomonosov Moscow State University, Tashkent Branch"
 repository-code: "https://github.com/nsnargiza-gif/HybridCR"
 url: "https://github.com/nsnargiza-gif/HybridCR"
-doi: 10.17632/p8m3f9kx57.1
+doi: 10.17632/p8m3f9kx57.2
 references:
   - type: article
     title: "A Bernstein–von Mises theorem for parametric competing risks under hybrid censoring"
